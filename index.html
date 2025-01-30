@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <title>Making your first Phaser 3 Game</title>
     <script src="https://cdn.jsdelivr.net/npm/phaser@v3.87.0/dist/phaser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins@1.2.4/dist/rexvirtualjoystickplugin.min.js"></script>
     <style type="text/css">
       body {
         margin: 0;
@@ -16,12 +17,14 @@
         type: Phaser.AUTO,
         width: 800,
         height: 600,
-        // width: window.innerWidth,
-        // height: window.innerHeight,
-        // scale: {
-        //     mode: Phaser.Scale.RESIZE,
-        //     autoCenter: Phaser.Scale.CENTER_BOTH
-        // },
+        scale: {
+          mode: Phaser.Scale.FIT,
+          parent: "phaser-game",
+          autoCenter: Phaser.Scale.CENTER_BOTH,
+          width: 800,
+          height: 600,
+          zoom: 2,
+        },
         physics: {
           default: "arcade",
           arcade: {
@@ -36,6 +39,7 @@
         },
       };
 
+      let isDesktop;
       let player;
       let stars;
       let bombs;
@@ -44,8 +48,12 @@
       let score = 0;
       let gameOver = false;
       let scoreText;
-
+      let joystick1;
+      let speed = 3,
+        jumpPower = -520,
+        isJumping = false;
       let game = new Phaser.Game(config);
+      let wKey, aKey, dKey;
 
       function preload() {
         this.load.image("sky", "./assets/sky.png");
@@ -54,35 +62,40 @@
         this.load.image("bomb", "./assets/bomb.png");
         this.load.spritesheet("dude", "./assets/dude.png", {
           frameWidth: 32,
-          frameHeight: 48,
+          frameHeight: 44,
         });
+
+        if (this.sys.game.device.os.desktop) {
+          isDesktop = true;
+        } else {
+          isDesktop = false;
+        }
+
+        if (isDesktop) {
+          this.load.plugin(
+            "rexvirtualjoystickplugin",
+            "https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js",
+            true
+          );
+        }
       }
 
       function create() {
-        //  A simple background for our game
         this.add.image(400, 300, "sky");
 
-        //  The platforms group contains the ground and the 2 ledges we can jump on
         platforms = this.physics.add.staticGroup();
 
-        //  Here we create the ground.
-        //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
         platforms.create(400, 568, "ground").setScale(2).refreshBody();
-
-        //  Now let's create some ledges
         platforms.create(600, 400, "ground");
         platforms.create(50, 250, "ground");
         platforms.create(750, 220, "ground");
 
-        // The player and its settings
         player = this.physics.add.sprite(100, 450, "dude");
-
-        //  Player physics properties. Give the little guy a slight bounce.
         player.setGravityY(400);
         // player.setBounce(0.2);
         player.setCollideWorldBounds(true);
+        player.setMaxVelocity(160, 1000);
 
-        //  Our player animations, turning, walking left and walking right.
         this.anims.create({
           key: "left",
           frames: this.anims.generateFrameNumbers("dude", { start: 0, end: 3 }),
@@ -106,7 +119,6 @@
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
 
-        //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
         stars = this.physics.add.group({
           key: "star",
           repeat: 11,
@@ -114,13 +126,11 @@
         });
 
         stars.children.iterate(function (child) {
-          //  Give each star a slightly different bounce
           child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
         });
 
         bombs = this.physics.add.group();
 
-        //  The score
         scoreText = this.add.text(16, 16, "score: 0", {
           fontSize: "32px",
           fill: "#000",
@@ -146,41 +156,80 @@
         bomb.setCollideWorldBounds(true);
         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
         bomb.allowGravity = false;
+
+        if (!isDesktop) {
+          joystick1 = this.plugins
+            .get("rexvirtualjoystickplugin")
+            .add(this, {
+              x: this.scale.width - 150,
+              y: this.scale.height - 150,
+              radius: 80,
+              base: this.add.circle(0, 0, 80, 0x888888),
+              thumb: this.add.circle(0, 0, 40, 0xffffff),
+              dir: 2,
+            })
+            .on("update", () => {
+              if (joystick1.up && player.body.touching.down) {
+                player.setVelocityY(jumpPower);
+                isJumping = true;
+              }
+            });
+        }
+
+        wKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
+        aKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
+        dKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
       }
 
       function update() {
         if (gameOver) {
           return;
         }
+        if (isDesktop) {
+          if (cursors.left.isDown || aKey.isDown) {
+            player.setVelocityX(-160);
 
-        if (cursors.left.isDown) {
-          player.setVelocityX(-160);
+            player.anims.play("left", true);
+          } else if (cursors.right.isDown || dKey.isDown) {
+            player.setVelocityX(160);
 
-          player.anims.play("left", true);
-        } else if (cursors.right.isDown) {
-          player.setVelocityX(160);
+            player.anims.play("right", true);
+          } else {
+            player.setVelocityX(0);
 
-          player.anims.play("right", true);
+            player.anims.play("turn");
+          }
+
+          if ((cursors.up.isDown || wKey.isDown || cursors.space.isDown) && player.body.touching.down) {
+            player.setVelocityY(-520);
+          }
         } else {
-          player.setVelocityX(0);
+          let velocityX = joystick1.forceX * speed;
+          if (Math.abs(velocityX) < 10) {
+            player.setVelocityX(0);
+            player.anims.play("turn");
+          } else {
+            if (joystick1.forceX > 0) {
+              player.anims.play("right", true);
+            } else {
+              player.anims.play("left", true);
+            }
+            player.setVelocityX(velocityX);
+          }
 
-          player.anims.play("turn");
-        }
-
-        if (cursors.up.isDown && player.body.touching.down) {
-          player.setVelocityY(-520);
+          if (player.body.touching.down) {
+            isJumping = false;
+          }
         }
       }
 
       function collectStar(player, star) {
         star.disableBody(true, true);
 
-        //  Add and update the score
         score += 10;
         scoreText.setText("Score: " + score);
 
         if (stars.countActive(true) === 0) {
-          //  A new batch of stars to collect
           stars.children.iterate(function (child) {
             child.enableBody(true, child.x, 0, true, true);
           });
@@ -219,7 +268,6 @@
             score = 0;
             this.physics.start();
             this.scene.restart();
-            // restartButton.destroy();
           });
       }
     </script>
