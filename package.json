@@ -32,6 +32,7 @@
     "webpack-dev-server": "^5.2.0"
   },
   "dependencies": {
-    "phaser": "^3.88.0"
+    "phaser": "^3.88.0",
+    "phaser3-rex-plugins": "^1.80.13"
   }
 }
