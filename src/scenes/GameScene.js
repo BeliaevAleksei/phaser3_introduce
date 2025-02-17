@@ -97,7 +97,7 @@ export default class GameScene extends Phaser.Scene {
     this.platforms.add(platform2);
     this.platforms.add(platform3);
     this.platforms.add(platform4);
-
+    console.log("this.scale.height", this.scale.displaySize.height);
     this.stars = this.physics.add.group({
       key: "star",
       repeat: 11,
