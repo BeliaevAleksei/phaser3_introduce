@@ -7,7 +7,7 @@ module.exports = {
   mode: "development",
   entry: "./src/main.js",
   output: {
-    filename: "bundle.js",
+    filename: "[name].[contenthash].js",
     path: path.resolve(__dirname, "dist"),
   },
   devServer: {
@@ -28,6 +28,11 @@ module.exports = {
         },
       },
     ],
+  },
+  optimization: {
+    splitChunks: {
+      chunks: "all",
+    },
   },
   plugins: [
     new CleanWebpackPlugin(),

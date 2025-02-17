@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import GameManager from "../utils/gameManager.js";
 
+const SPEED = 160;
+const JUMP = -520;
+
 export default class Player extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, "dude");
@@ -45,11 +48,11 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
 
     if (GameManager.getIsDesktop()) {
       if (this.cursors.left.isDown || this.aKey.isDown) {
-        this.setVelocityX(-160);
+        this.setVelocityX(-SPEED);
 
         this.anims.play("left", true);
       } else if (this.cursors.right.isDown || this.dKey.isDown) {
-        this.setVelocityX(160);
+        this.setVelocityX(SPEED);
 
         this.anims.play("right", true);
       } else {
@@ -64,20 +67,26 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
           this.cursors.space.isDown) &&
         this.body.touching.down
       ) {
-        this.setVelocityY(-520);
+        this.setVelocityY(JUMP);
       }
     } else {
-      let velocityX = joystick1.forceX * speed;
+      const joystickForceX = this.scene.joystick1.forceX;
+      let velocityX = joystickForceX * SPEED;
       if (Math.abs(velocityX) < 10) {
         this.setVelocityX(0);
         this.anims.play("turn");
       } else {
-        if (joystick1.forceX > 0) {
+        if (joystickForceX > 0) {
           this.anims.play("right", true);
         } else {
           this.anims.play("left", true);
         }
         this.setVelocityX(velocityX);
+      }
+
+      if (this.scene.joystick1.up && this.body.touching.down) {
+        this.setVelocityY(JUMP);
+        this.isJumping = true;
       }
 
       if (this.body.touching.down) {

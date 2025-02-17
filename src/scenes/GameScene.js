@@ -6,6 +6,7 @@ import Bomb from "../objects/Bomb.js";
 import GameManager from "../utils/gameManager.js";
 import GameOverLabel from "../objects/GameOverLabel.js";
 import EventEmitter from "../utils/eventEmmiter.js";
+import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -29,11 +30,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     if (!GameManager.getIsDesktop()) {
-      this.load.plugin(
-        "rexvirtualjoystickplugin",
-        "https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js",
-        true
-      );
+      this.load.plugin("rexvirtualjoystickplugin", VirtualJoystickPlugin, true);
     }
   }
 
@@ -43,9 +40,16 @@ export default class GameScene extends Phaser.Scene {
     GameManager.incrementScore(10);
 
     if (this.stars.countActive(true) === 0) {
-      this.stars.children.iterate(function (child) {
-        child.enableBody(true, child.x, 0, true, true);
+      this.stars.children.iterate((child) => {
+        child.enableBody(
+          true,
+          child.x,
+          Phaser.Math.Between(0, this.scale.displaySize.height),
+          true,
+          true
+        );
       });
+      this.spawnBomb();
     }
   }
 
@@ -58,7 +62,9 @@ export default class GameScene extends Phaser.Scene {
     this.bombs.add(bomb);
     bomb.setBounce(1); // fix that
     bomb.setCollideWorldBounds(true); // fix that
-    bomb.setVelocity(Phaser.Math.Between(-200, 200), 20); // fix that
+    let angle = Phaser.Math.Between(30, 150);
+    let speed = 200; // fix that
+    this.physics.velocityFromAngle(angle, speed, bomb.body.velocity); // fix that
     bomb.setGravityY(200); // fix that
   }
 
@@ -74,7 +80,6 @@ export default class GameScene extends Phaser.Scene {
       GameManager.updateScore(0);
       GameManager.updateShouldRestart(false);
       EventEmitter.clear();
-      this.physics.start();
       this.scene.restart();
     }
   }
@@ -100,10 +105,6 @@ export default class GameScene extends Phaser.Scene {
       .on("pointerdown", () => {
         GameManager.updateShouldRestart(true);
       });
-
-    if (GameManager.getGameOver()) {
-      this.add.existing(this);
-    }
   }
 
   create() {
@@ -120,13 +121,18 @@ export default class GameScene extends Phaser.Scene {
     this.platforms.add(platform2);
     this.platforms.add(platform3);
     this.platforms.add(platform4);
-
+    console.log("this.scale.height", this.scale.displaySize.height);
     this.stars = this.physics.add.group({
       key: "star",
       repeat: 11,
-      setXY: { x: 12, y: 0, stepX: 70 },
+      setXY: {
+        x: 12,
+        y: Phaser.Math.Between(0, this.scale.displaySize.height),
+        stepX: 70,
+      },
     });
-    this.stars.children.iterate(function (child) {
+    this.stars.children.iterate((child) => {
+      child.y = Phaser.Math.Between(0, this.scale.height - 100);
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
 
@@ -170,22 +176,14 @@ export default class GameScene extends Phaser.Scene {
     // });
 
     if (!GameManager.getIsDesktop()) {
-      joystick1 = this.plugins
-        .get("rexvirtualjoystickplugin")
-        .add(this, {
-          x: this.scale.width - 150,
-          y: this.scale.height - 150,
-          radius: 80,
-          base: this.add.circle(0, 0, 80, 0x888888),
-          thumb: this.add.circle(0, 0, 40, 0xffffff),
-          dir: 2,
-        })
-        .on("update", () => {
-          if (joystick1.up && this.player.body.touching.down) {
-            this.player.setVelocityY(jumpPower);
-            this.player.isJumping = true;
-          }
-        });
+      this.joystick1 = this.plugins.get("rexvirtualjoystickplugin").add(this, {
+        x: this.scale.width - 110,
+        y: this.scale.height - 110,
+        radius: 80,
+        base: this.add.circle(0, 0, 80, 0x888888),
+        thumb: this.add.circle(0, 0, 40, 0xffffff),
+        dir: 2,
+      });
     }
 
     this.spawnBomb();
