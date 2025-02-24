@@ -7,6 +7,7 @@ import GameManager from "../utils/gameManager.js";
 import GameOverLabel from "../objects/GameOverLabel.js";
 import EventEmitter from "../utils/eventEmmiter.js";
 import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
+import wsService from "../services/WebSocketService.js";
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -38,6 +39,7 @@ export default class GameScene extends Phaser.Scene {
     star.disableBody(true, true);
 
     GameManager.incrementScore(10);
+    wsService.send({ action: "update_score", score: GameManager.score });
 
     if (this.stars.countActive(true) === 0) {
       this.stars.children.iterate((child) => {
@@ -69,45 +71,19 @@ export default class GameScene extends Phaser.Scene {
   }
 
   gameOver() {
-    if (GameManager.getGameOver()) {
-      this.physics.pause();
-    }
-  }
-
-  restart() {
-    if (GameManager.getShouldRestart()) {
-      GameManager.updateGameOver(false);
-      GameManager.updateScore(0);
-      GameManager.updateShouldRestart(false);
-      EventEmitter.clear();
-      this.scene.restart();
-    }
+    // this.physics.pause();
+    this.scene.start('GameOverScene', { score: this.score });
   }
 
   hitBomb(player, bomb) {
     player.setTint(0xff0000);
     player.anims.play("turn");
-    GameManager.updateGameOver(true);
-
-    const restartButton = this.add
-      .text(390, 250, "Играть снова", {
-        fontSize: "32px",
-        fill: "#000",
-      })
-      .setOrigin(0.5)
-      .setInteractive()
-      .on("pointerover", () => {
-        restartButton.setScale(0.9);
-      })
-      .on("pointerout", () => {
-        restartButton.setScale(1);
-      })
-      .on("pointerdown", () => {
-        GameManager.updateShouldRestart(true);
-      });
+    this.gameOver();
   }
 
   create() {
+    wsService.connect();
+    this.score = 0;
     this.add.image(400, 300, "sky");
 
     this.platforms = this.physics.add.staticGroup();
@@ -188,7 +164,6 @@ export default class GameScene extends Phaser.Scene {
 
     this.spawnBomb();
     EventEmitter.on("onGameOverChange", () => this.gameOver());
-    EventEmitter.on("onShouldRestartChange", () => this.restart());
   }
 
   update() {
