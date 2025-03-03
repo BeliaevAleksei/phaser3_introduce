@@ -5,7 +5,6 @@ class GameManager {
     if (!GameManager.instance) {
       this.isGameOver = false;
       this.shouldRestart = false;
-      this.score = 0;
       this.isDesktop = true;
       GameManager.instance = this;
     }
@@ -20,20 +19,6 @@ class GameManager {
 
   getGameOver() {
     return this.isGameOver;
-  }
-
-  updateScore(score) {
-    this.score = score;
-    EventEmitter.emit("onScoreChange", this.score);
-  }
-
-  incrementScore(increment) {
-    this.score += increment;
-    EventEmitter.emit("onScoreChange", this.score);
-  }
-
-  getScore() {
-    return this.score;
   }
 
   updateShouldRestart(state) {
