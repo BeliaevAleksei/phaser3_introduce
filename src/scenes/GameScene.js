@@ -4,7 +4,6 @@ import Platform from "../objects/Platform.js";
 import ScoreLabel from "../objects/ScoreLabel.js";
 import Bomb from "../objects/Bomb.js";
 import GameManager from "../utils/gameManager.js";
-import GameOverLabel from "../objects/GameOverLabel.js";
 import EventEmitter from "../utils/eventEmmiter.js";
 import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 import wsService from "../services/WebSocketService.js";
@@ -20,8 +19,9 @@ export default class GameScene extends Phaser.Scene {
     this.load.image("star", "./assets/star.png");
     this.load.image("bomb", "./assets/bomb.png");
     this.load.spritesheet("dude", "./assets/dude.png", {
-      frameWidth: 32,
-      frameHeight: 44,
+      frameWidth: 24,
+      frameHeight: 43,
+      spacing: 5,
     });
 
     if (this.sys.game.device.os.desktop) {
@@ -35,10 +35,15 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  updateScore(score) {
+    this.score = score;
+    this.scroreLabel.updateLabel(score)
+  }
+
   collectStar(player, star) {
     star.disableBody(true, true);
 
-    GameManager.incrementScore(10);
+    this.updateScore(this.score + 10);
     wsService.send({ action: "update_score", score: GameManager.score });
 
     if (this.stars.countActive(true) === 0) {
@@ -72,7 +77,8 @@ export default class GameScene extends Phaser.Scene {
 
   gameOver() {
     // this.physics.pause();
-    this.scene.start('GameOverScene', { score: this.score });
+    EventEmitter.clear();
+    this.scene.start("GameOverScene", { score: this.score });
   }
 
   hitBomb(player, bomb) {
@@ -146,10 +152,6 @@ export default class GameScene extends Phaser.Scene {
       fontSize: "32px",
       fill: "#000",
     });
-    // this.gameOverLabel = new GameOverLabel(this, 190, 160, "GAME OVER", {
-    //   fontSize: "64px",
-    //   fill: "#000",
-    // });
 
     if (!GameManager.getIsDesktop()) {
       this.joystick1 = this.plugins.get("rexvirtualjoystickplugin").add(this, {
