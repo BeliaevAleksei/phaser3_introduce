@@ -51,7 +51,7 @@ export default class GameScene extends Phaser.Scene {
         child.enableBody(
           true,
           child.x,
-          Phaser.Math.Between(0, this.scale.displaySize.height),
+          Phaser.Math.Between(0, this.scale.height - 200),
           true,
           true
         );
@@ -114,7 +114,7 @@ export default class GameScene extends Phaser.Scene {
       },
     });
     this.stars.children.iterate((child) => {
-      child.y = Phaser.Math.Between(0, this.scale.height - 100);
+      child.y = Phaser.Math.Between(0, this.scale.height - 200);
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
 
