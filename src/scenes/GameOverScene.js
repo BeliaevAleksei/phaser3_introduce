@@ -16,6 +16,20 @@ export default class GameOverScene extends Phaser.Scene {
 
     if (data.type === "save_success") {
       wsService.socket.removeEventListener("message", this.changeScene);
+
+      if (!this.scene.get("StatisticScene")) {
+        import(`./StatisticScene.js`).then((module) => {
+          const SceneClass = module.default;
+          this.scene.add("StatisticScene", SceneClass);
+          this.scene.start("StatisticScene", {
+            score: this.score,
+            players: data.message,
+          });
+        });
+
+        return;
+      }
+
       this.scene.start("StatisticScene", {
         score: this.score,
         players: data.message,

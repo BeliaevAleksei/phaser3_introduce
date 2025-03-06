@@ -76,8 +76,18 @@ export default class GameScene extends Phaser.Scene {
   }
 
   gameOver() {
-    // this.physics.pause();
     EventEmitter.clear();
+
+    if (!this.scene.get("GameOverScene")) {
+      import(`./GameOverScene.js`).then((module) => {
+        const SceneClass = module.default;
+        this.scene.add("GameOverScene", SceneClass);
+        this.scene.start("GameOverScene", { score: this.score });
+      });
+
+      return;
+    }
+
     this.scene.start("GameOverScene", { score: this.score });
   }
 
