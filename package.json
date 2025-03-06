@@ -9,11 +9,6 @@
     "build": "webpack --mode production",
     "release": "standard-version"
   },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
   "keywords": [],
   "author": "DisLex™ Production",
   "license": "ISC",
@@ -22,12 +17,11 @@
     "@babel/preset-env": "7.26.8",
     "babel-loader": "9.2.1",
     "clean-webpack-plugin": "4.0.0",
-    "commitizen": "4.3.1",
     "copy-webpack-plugin": "12.0.2",
     "css-loader": "^7.1.2",
-    "cz-conventional-changelog": "3.3.0",
     "dotenv-webpack": "8.1.0",
     "html-webpack-plugin": "5.6.3",
+    "mini-css-extract-plugin": "^2.9.2",
     "raw-loader": "^4.0.2",
     "standard-version": "9.5.0",
     "style-loader": "^4.0.0",

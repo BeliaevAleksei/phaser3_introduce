@@ -1,9 +1,6 @@
 import "./style.css";
 
 import Phaser from "phaser";
-import GameScene from "./scenes/GameScene";
-import GameOverScene from "./scenes/GameOverScene";
-import StatisticScene from "./scenes/StatisticScene";
 
 import UIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin.js";
 
@@ -26,7 +23,10 @@ const config = {
       debug: false,
     },
   },
-  scene: [GameScene, GameOverScene, StatisticScene],
+  scene: {
+    preload: preload,
+    create: create,
+  },
   plugins: {
     scene: [
       {
@@ -40,3 +40,17 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+function preload() {
+  this.load.image("sky", "./assets/sky.png");
+}
+
+function create() {
+  this.add.image(400, 300, "sky");
+
+  import("./scenes/GameScene").then((module) => {
+    const GameScene = module.default;
+    game.scene.add("GameScene", GameScene);
+    game.scene.start("GameScene");
+  });
+}
