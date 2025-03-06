@@ -37,14 +37,14 @@ export default class GameScene extends Phaser.Scene {
 
   updateScore(score) {
     this.score = score;
-    this.scroreLabel.updateLabel(score)
+    this.scroreLabel.updateLabel(score);
+    wsService.send({ action: "update_score" });
   }
 
   collectStar(player, star) {
     star.disableBody(true, true);
 
     this.updateScore(this.score + 10);
-    wsService.send({ action: "update_score", score: GameManager.score });
 
     if (this.stars.countActive(true) === 0) {
       this.stars.children.iterate((child) => {

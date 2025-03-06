@@ -1,6 +1,11 @@
+import "./style.css";
+
 import Phaser from "phaser";
 import GameScene from "./scenes/GameScene";
 import GameOverScene from "./scenes/GameOverScene";
+import StatisticScene from "./scenes/StatisticScene";
+
+import UIPlugin from "phaser3-rex-plugins/templates/ui/ui-plugin.js";
 
 const config = {
   type: Phaser.AUTO,
@@ -21,7 +26,17 @@ const config = {
       debug: false,
     },
   },
-  scene: [GameScene, GameOverScene],
+  scene: [GameScene, GameOverScene, StatisticScene],
+  plugins: {
+    scene: [
+      {
+        key: "rexUI",
+        plugin: UIPlugin,
+        mapping: "rexUI",
+        sceneKey: "GameOverScene",
+      },
+    ],
+  },
 };
 
 const game = new Phaser.Game(config);
