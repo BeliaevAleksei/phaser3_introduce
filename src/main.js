@@ -27,16 +27,6 @@ const config = {
     preload: preload,
     create: create,
   },
-  plugins: {
-    scene: [
-      {
-        key: "rexUI",
-        plugin: UIPlugin,
-        mapping: "rexUI",
-        sceneKey: "GameOverScene",
-      },
-    ],
-  },
 };
 
 const game = new Phaser.Game(config);

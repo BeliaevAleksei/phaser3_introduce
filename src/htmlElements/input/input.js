@@ -3,9 +3,22 @@ import html from "./input.html?raw";
 
 export default class PlayerInput {
   constructor(name, onSubmit) {
-    this.name = /^[а-яА-Яa-zA-Z0-9]+$/.test(name) ? name : null;
+    this.name =
+      /^[а-яА-ЯA-Za-z0-9 _]*[а-яА-ЯA-Za-z0-9][а-яА-ЯA-Za-z0-9 _]*$/.test(name)
+        ? name
+        : null;
     this.onSubmit = onSubmit;
     this.container = null;
+  }
+
+  clearDefaultInputErrorMessage(e) {
+    e.target.setCustomValidity("");
+  }
+
+  setupInputErrorMessage(e) {
+    e.target.setCustomValidity(
+      "Имя должно быть не длиннее 13 и без спецсиволов"
+    );
   }
 
   async load() {
@@ -19,12 +32,18 @@ export default class PlayerInput {
     const form = this.container.querySelector("#player_name_form");
     const input = this.container.querySelector("#player_name_input");
     input.value = this.name || null;
+    input.addEventListener("input", this.clearDefaultInputErrorMessage);
+    input.addEventListener("invalid", this.setupInputErrorMessage);
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const playerName = input.value.trim();
 
-      if (!/^[а-яА-Яa-zA-Z0-9]+$/.test(playerName)) {
+      if (
+        !/^[а-яА-ЯA-Za-z0-9 _]*[а-яА-ЯA-Za-z0-9][а-яА-ЯA-Za-z0-9 _]*$/.test(
+          playerName
+        )
+      ) {
         alert("Можно вводить только буквы и цифры!");
         return;
       }
