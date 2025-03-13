@@ -13,9 +13,9 @@ class WebSocketService {
       this.isConnected = true;
     };
 
-    this.socket.onmessage = (event) => {
-      console.log("📩 Получено сообщение:", event.data);
-    };
+    // this.socket.onmessage = (event) => {
+      // console.log("📩 Получено сообщение:", event.data);
+    // };
 
     this.socket.onclose = () => {
       console.log("❌ WebSocket отключен");
@@ -30,7 +30,7 @@ class WebSocketService {
   send(data) {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
-      console.log("📤 Отправлено:", data);
+      // console.log("📤 Отправлено:", data);
     } else {
       console.warn("🚫 WebSocket не подключен, отправка невозможна");
     }

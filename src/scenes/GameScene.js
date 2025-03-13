@@ -11,6 +11,7 @@ import wsService from "../services/WebSocketService.js";
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super({ key: "GameScene" });
+    this.isGameOver = false;
   }
 
   preload() {
@@ -77,23 +78,26 @@ export default class GameScene extends Phaser.Scene {
 
   gameOver() {
     EventEmitter.clear();
-
-    if (!this.scene.get("GameOverScene")) {
-      import(`./GameOverScene.js`).then((module) => {
-        const SceneClass = module.default;
-        this.scene.add("GameOverScene", SceneClass);
-        this.scene.start("GameOverScene", { score: this.score });
-      });
-
+    if (this.game.scene.getScene("GameOverScene")) {
+      this.scene.start("GameOverScene", { score: this.score });
       return;
     }
 
-    this.scene.start("GameOverScene", { score: this.score });
+    import(`./GameOverScene.js`)
+      .then((module) => {
+        const SceneClass = module.default;
+        this.scene.add("GameOverScene", SceneClass);
+        this.scene.start("GameOverScene", { score: this.score });
+      })
+      .catch((err) => {
+        console.error("Ошибка загрузки сцены:", err);
+      });
   }
 
   hitBomb(player, bomb) {
     player.setTint(0xff0000);
     player.anims.play("turn");
+    this.isGameOver = true;
     this.gameOver();
   }
 
@@ -175,11 +179,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.spawnBomb();
-    EventEmitter.on("onGameOverChange", () => this.gameOver());
   }
 
   update() {
-    if (GameManager.getGameOver()) {
+    if (this.isGameOver) {
       return;
     }
     this.player.update();

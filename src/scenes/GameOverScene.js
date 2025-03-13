@@ -5,6 +5,8 @@ import wsService from "../services/WebSocketService.js";
 export default class GameOverScene extends Phaser.Scene {
   constructor() {
     super({ key: "GameOverScene" });
+    this.playerInput = null;
+    this.handleChangeScene = this.changeScene.bind(this);
   }
 
   preload() {
@@ -15,42 +17,50 @@ export default class GameOverScene extends Phaser.Scene {
     const data = JSON.parse(event.data);
 
     if (data.type === "save_success") {
-      wsService.socket.removeEventListener("message", this.changeScene);
+      wsService.socket.removeEventListener("message", this.handleChangeScene);
+      this.playerInput.destroy();
 
-      if (!this.scene.get("StatisticScene")) {
-        import(`./StatisticScene.js`).then((module) => {
+      if (this.game.scene.getScene("StatisticScene")) {
+        this.scene.start("StatisticScene", {
+          score: this.score,
+          players: data.message,
+        });
+        return;
+      }
+
+      import(`./StatisticScene.js`)
+        .then((module) => {
           const SceneClass = module.default;
           this.scene.add("StatisticScene", SceneClass);
           this.scene.start("StatisticScene", {
             score: this.score,
             players: data.message,
           });
+        })
+        .catch((err) => {
+          console.error("Ошибка загрузки сцены:", err);
         });
+    }
 
-        return;
-      }
-
-      this.scene.start("StatisticScene", {
-        score: this.score,
-        players: data.message,
-      });
+    if (data.type === "invalid_name") {
+      this.playerInput.setupDefaultInputErrorMessage();
     }
   }
 
   create(data) {
-    wsService.socket.addEventListener("message", this.changeScene.bind(this));
+    wsService.socket.addEventListener("message", this.handleChangeScene);
     this.input.keyboard.clearCaptures();
     this.score = data.score;
     this.add.image(400, 300, "sky");
     wsService.send({ action: "end_game" });
     const userName = localStorage.getItem("userName");
 
-    const playerInput = new PlayerInput(userName, (playerName) => {
+    this.playerInput = new PlayerInput(userName, (playerName) => {
       wsService.send({ action: "save_result", username: playerName });
       localStorage.setItem("userName", playerName);
     });
 
-    playerInput.load(userName);
+    this.playerInput.load(userName);
   }
 
   update() {}

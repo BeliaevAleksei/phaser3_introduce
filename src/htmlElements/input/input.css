@@ -26,3 +26,10 @@
   -webkit-transition: height 1s;
   border-bottom: 1px solid gray;
 }
+
+#player_name_error_message {
+  color: red;
+  text-align: center;
+  visibility: hidden;
+  font-size: 18px;
+}

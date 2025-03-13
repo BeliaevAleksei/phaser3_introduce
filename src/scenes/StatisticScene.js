@@ -1,5 +1,4 @@
 import Phaser from "phaser";
-import GameManager from "../utils/gameManager.js";
 
 export default class StatisticScene extends Phaser.Scene {
   constructor() {
@@ -7,9 +6,19 @@ export default class StatisticScene extends Phaser.Scene {
   }
 
   restart() {
-    GameManager.updateGameOver(false);
-    GameManager.updateShouldRestart(false);
-    this.scene.start("GameScene");
+    if (this.game.scene.getScene("GameScene")) {
+      this.game.scene.remove("GameScene");
+    }
+
+    import(`./GameScene.js`)
+      .then((module) => {
+        const SceneClass = module.default;
+        this.scene.add("GameScene", SceneClass);
+        this.scene.start("GameScene", { score: this.score });
+      })
+      .catch((err) => {
+        console.error("Ошибка загрузки сцены:", err);
+      });
   }
 
   preload() {
