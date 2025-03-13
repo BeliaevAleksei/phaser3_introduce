@@ -4,6 +4,7 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const Dotenv = require("dotenv-webpack");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const TerserWebpackPlugin = require("terser-webpack-plugin");
 
 module.exports = (env, argv) => {
   const isProd = argv.mode === "production";
@@ -19,7 +20,7 @@ module.exports = (env, argv) => {
     cache: {
       type: "filesystem",
     },
-    devtool: isProd ? "source-map" : "inline-source-map",
+    devtool: isProd ? "hidden-source-map" : "inline-source-map",
     devServer: !isProd && {
       static: {
         directory: path.resolve(__dirname, "dist"),
@@ -68,8 +69,8 @@ module.exports = (env, argv) => {
     optimization: {
       splitChunks: {
         chunks: "all",
-        minSize: 20000,
-        maxSize: 50000,
+        minSize: 10000,
+        maxSize: 500000,
         cacheGroups: {
           vendor: {
             test: /[\\/]node_modules[\\/]/,
@@ -79,6 +80,15 @@ module.exports = (env, argv) => {
         },
       },
       minimize: isProd,
+      minimizer: [
+        new TerserWebpackPlugin({
+          terserOptions: {
+            compress: {
+              drop_console: true,
+            },
+          },
+        }),
+      ],
     },
     plugins: [
       new CleanWebpackPlugin(),

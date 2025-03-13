@@ -1,4 +1,4 @@
-import Phaser from "phaser";
+import { Scene } from "phaser";
 import Player from "../objects/Player.js";
 import Platform from "../objects/Platform.js";
 import ScoreLabel from "../objects/ScoreLabel.js";
@@ -8,7 +8,7 @@ import EventEmitter from "../utils/eventEmmiter.js";
 import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 import wsService from "../services/WebSocketService.js";
 
-export default class GameScene extends Phaser.Scene {
+export default class GameScene extends Scene {
   constructor() {
     super({ key: "GameScene" });
     this.isGameOver = false;

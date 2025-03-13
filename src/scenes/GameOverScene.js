@@ -1,8 +1,8 @@
-import Phaser from "phaser";
+import { Scene } from "phaser";
 import PlayerInput from "../htmlElements/input/input.js";
 import wsService from "../services/WebSocketService.js";
 
-export default class GameOverScene extends Phaser.Scene {
+export default class GameOverScene extends Scene {
   constructor() {
     super({ key: "GameOverScene" });
     this.playerInput = null;

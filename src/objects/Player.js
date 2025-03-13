@@ -1,10 +1,10 @@
-import Phaser from "phaser";
+import { Physics, Input } from "phaser";
 import GameManager from "../utils/gameManager.js";
 
 const SPEED = 160;
 const JUMP = -520;
 
-export default class Player extends Phaser.Physics.Arcade.Sprite {
+export default class Player extends Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, "dude");
     scene.add.existing(this);
@@ -36,9 +36,9 @@ export default class Player extends Phaser.Physics.Arcade.Sprite {
     });
 
     this.cursors = scene.input.keyboard.createCursorKeys();
-    this.wKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W);
-    this.aKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);
-    this.dKey = scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
+    this.wKey = scene.input.keyboard.addKey(Input.Keyboard.KeyCodes.W);
+    this.aKey = scene.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
+    this.dKey = scene.input.keyboard.addKey(Input.Keyboard.KeyCodes.D);
   }
 
   update() {

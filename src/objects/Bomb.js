@@ -1,6 +1,6 @@
-import Phaser from "phaser";
+import { Physics } from "phaser";
 
-export default class Bomb extends Phaser.Physics.Arcade.Sprite {
+export default class Bomb extends Physics.Arcade.Sprite {
   constructor(scene, x, y) {
     super(scene, x, y, "bomb");
     scene.add.existing(this);

@@ -1,6 +1,6 @@
-import Phaser from "phaser";
+import { Physics } from "phaser";
 
-export default class Platform extends Phaser.Physics.Arcade.Sprite {
+export default class Platform extends Physics.Arcade.Sprite {
   constructor(scene, x, y, texture) {
     super(scene, x, y, texture);
     scene.add.existing(this);
