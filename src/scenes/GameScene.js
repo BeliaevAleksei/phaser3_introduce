@@ -15,8 +15,8 @@ export default class GameScene extends Scene {
   }
 
   preload() {
-    this.load.image("sky", "./assets/sky.png");
-    this.load.image("ground", "./assets/platform.png");
+    this.load.image("sky2", "./assets/night-city.png");
+    this.load.image("ground", "./assets/night-platform.png");
     this.load.image("star", "./assets/star.png");
     this.load.image("bomb", "./assets/bomb.png");
     this.load.spritesheet("dude", "./assets/dude.png?v=2", {
@@ -104,16 +104,35 @@ export default class GameScene extends Scene {
   create() {
     wsService.connect();
     this.score = 0;
-    this.add.image(400, 300, "sky");
+    const gameWidth = this.sys.game.config.width;
+    const gameHeight = this.sys.game.config.height;
+
+    const bg = this.add.image(0, 0, "sky2").setOrigin(0, 0);
+    bg.displayWidth = gameWidth;
+    bg.displayHeight = gameHeight;
+
+    const darkOverlay = this.add
+      .rectangle(0, 0, gameWidth, gameHeight, 0x000000, 0.3)
+      .setOrigin(0, 0);
+    bg.setDepth(0);
+    darkOverlay.setDepth(1);
+
+    const ground = this.physics.add.staticImage(
+      gameWidth / 2,
+      gameHeight - 20,
+      "ground"
+    );
+    ground.displayWidth = gameWidth;
+    ground.refreshBody();
 
     this.platforms = this.physics.add.staticGroup();
-    const platform1 = new Platform(this, 400, 568, "ground")
-      .setScale(2)
-      .refreshBody();
+    // const platform1 = new Platform(this, 400, 568, "ground")
+    //   .setScale(2)
+    //   .refreshBody();
     const platform2 = new Platform(this, 600, 400, "ground");
     const platform3 = new Platform(this, 50, 250, "ground");
     const platform4 = new Platform(this, 750, 220, "ground");
-    this.platforms.add(platform1);
+    this.platforms.add(ground);
     this.platforms.add(platform2);
     this.platforms.add(platform3);
     this.platforms.add(platform4);

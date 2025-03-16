@@ -6,15 +6,15 @@ import BootScene from "./scenes/BootScene";
 
 const config = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 600,
+  width: window.innerWidth,
+  height: window.innerHeight,
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     parent: "phaser-game",
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 800,
-    height: 600,
-    zoom: 2,
+    // width: 1980,
+    // height: 1024,
+    // zoom: 2,
   },
   physics: {
     default: "arcade",
