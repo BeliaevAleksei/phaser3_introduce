@@ -10,7 +10,7 @@ export default class Player extends Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.isJumping = false;
-    // this.setBounce(0.2);
+    // this.body.setSize(this.width, this.height, true);
     this.setCollideWorldBounds(true);
     this.setMaxVelocity(160, 1000);
     this.setGravityY(400);

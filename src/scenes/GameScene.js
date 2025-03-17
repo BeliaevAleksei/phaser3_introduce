@@ -7,6 +7,7 @@ import GameManager from "../utils/gameManager.js";
 import EventEmitter from "../utils/eventEmmiter.js";
 import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 import wsService from "../services/WebSocketService.js";
+import { generateLevel } from "../utils/platformGeneration.js";
 
 export default class GameScene extends Scene {
   constructor() {
@@ -16,12 +17,15 @@ export default class GameScene extends Scene {
 
   preload() {
     this.load.image("sky2", "./assets/night-city.png");
-    this.load.image("ground", "./assets/night-platform.png");
+    this.load.image("platform", "./assets/night-platform.png");
+    this.load.image("ground", "./assets/night-ground-platform.png");
     this.load.image("star", "./assets/star.png");
     this.load.image("bomb", "./assets/bomb.png");
-    this.load.spritesheet("dude", "./assets/dude.png?v=2", {
-      frameWidth: 24,
-      frameHeight: 43,
+    this.load.image("cigarette", "./assets/cigarette.png");
+    this.load.image("particle", "./assets/sigarete-practicle.png");
+    this.load.spritesheet("dude", "./assets/dude-2.png?v=1", {
+      frameWidth: 81,
+      frameHeight: 94,
       spacing: 5,
     });
 
@@ -110,48 +114,34 @@ export default class GameScene extends Scene {
     const bg = this.add.image(0, 0, "sky2").setOrigin(0, 0);
     bg.displayWidth = gameWidth;
     bg.displayHeight = gameHeight;
+    this.cigarettes = this.physics.add.group();
 
-    const darkOverlay = this.add
-      .rectangle(0, 0, gameWidth, gameHeight, 0x000000, 0.3)
-      .setOrigin(0, 0);
-    bg.setDepth(0);
-    darkOverlay.setDepth(1);
+    // this.stars = this.physics.add.group({
+    //   key: "star",
+    //   repeat: 11,
+    //   setXY: {
+    //     x: 12,
+    //     y: Phaser.Math.Between(0, this.scale.displaySize.height),
+    //     stepX: 70,
+    //   },
+    // });
+    // this.stars.children.iterate((child) => {
+    //   child.y = Phaser.Math.Between(0, this.scale.height - 200);
+    //   child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    // });
 
+    this.player = new Player(this, 100, 450);
+    this.platforms = this.physics.add.staticGroup();
     const ground = this.physics.add.staticImage(
       gameWidth / 2,
-      gameHeight - 20,
+      gameHeight - 12,
       "ground"
     );
     ground.displayWidth = gameWidth;
     ground.refreshBody();
-
-    this.platforms = this.physics.add.staticGroup();
-    // const platform1 = new Platform(this, 400, 568, "ground")
-    //   .setScale(2)
-    //   .refreshBody();
-    const platform2 = new Platform(this, 600, 400, "ground");
-    const platform3 = new Platform(this, 50, 250, "ground");
-    const platform4 = new Platform(this, 750, 220, "ground");
     this.platforms.add(ground);
-    this.platforms.add(platform2);
-    this.platforms.add(platform3);
-    this.platforms.add(platform4);
 
-    this.stars = this.physics.add.group({
-      key: "star",
-      repeat: 11,
-      setXY: {
-        x: 12,
-        y: Phaser.Math.Between(0, this.scale.displaySize.height),
-        stepX: 70,
-      },
-    });
-    this.stars.children.iterate((child) => {
-      child.y = Phaser.Math.Between(0, this.scale.height - 200);
-      child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-    });
-
-    this.player = new Player(this, 100, 450);
+    generateLevel({ scene: this });
 
     this.bombs = this.physics.add.group();
 
@@ -164,15 +154,15 @@ export default class GameScene extends Scene {
     );
 
     this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.collider(this.stars, this.platforms);
+    // this.physics.add.collider(this.stars, this.platforms);
     this.physics.add.collider(this.bombs, this.platforms);
-    this.physics.add.overlap(
-      this.player,
-      this.stars,
-      this.collectStar,
-      null,
-      this
-    );
+    // this.physics.add.overlap(
+    //   this.player,
+    //   this.stars,
+    //   this.collectStar,
+    //   null,
+    //   this
+    // );
     this.physics.add.collider(
       this.player,
       this.bombs,
