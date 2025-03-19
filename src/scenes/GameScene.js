@@ -187,7 +187,7 @@ export default class GameScene extends Scene {
       });
     }
 
-    this.spawnBomb();
+    // this.spawnBomb();
   }
 
   update() {
