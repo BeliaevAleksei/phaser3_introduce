@@ -5,15 +5,17 @@ const SPEED = 160;
 const JUMP = -520;
 
 export default class Player extends Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
+  constructor(scene, x, y, scale) {
     super(scene, x, y, "dude");
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.isJumping = false;
-    // this.body.setSize(this.width, this.height, true);
+    this.jumpPower = JUMP * scale;
+    this.speedPower = SPEED * scale;
     this.setCollideWorldBounds(true);
     this.setMaxVelocity(160, 1000);
     this.setGravityY(400);
+    this.setScale(scale * 0.7);
 
     scene.anims.create({
       key: "left",
@@ -48,11 +50,11 @@ export default class Player extends Physics.Arcade.Sprite {
 
     if (GameManager.getIsDesktop()) {
       if (this.cursors.left.isDown || this.aKey.isDown) {
-        this.setVelocityX(-SPEED);
+        this.setVelocityX(-this.speedPower);
 
         this.anims.play("left", true);
       } else if (this.cursors.right.isDown || this.dKey.isDown) {
-        this.setVelocityX(SPEED);
+        this.setVelocityX(this.speedPower);
 
         this.anims.play("right", true);
       } else {
@@ -67,11 +69,11 @@ export default class Player extends Physics.Arcade.Sprite {
           this.cursors.space.isDown) &&
         this.body.touching.down
       ) {
-        this.setVelocityY(JUMP);
+        this.setVelocityY(this.jumpPower);
       }
     } else {
       const joystickForceX = this.scene.joystick1.forceX;
-      let velocityX = joystickForceX * SPEED;
+      let velocityX = joystickForceX * this.speedPower;
       if (Math.abs(velocityX) < 10) {
         this.setVelocityX(0);
         this.anims.play("turn");
@@ -85,7 +87,7 @@ export default class Player extends Physics.Arcade.Sprite {
       }
 
       if (this.scene.joystick1.up && this.body.touching.down) {
-        this.setVelocityY(JUMP);
+        this.setVelocityY(this.jumpPower);
         this.isJumping = true;
       }
 

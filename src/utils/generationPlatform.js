@@ -13,7 +13,6 @@ export function generateLevel({
 
   const gameMap = generatePlatforms();
   addPlatformsToScene(scene, gameMap);
-  generateCigarettes(scene);
 
   if (scene.player) {
     scene.physics.add.collider(scene.player, scene.platforms);
@@ -26,27 +25,24 @@ function addPlatformsToScene(scene, gameMap) {
   const gameWidth = scene.sys.game.config.width;
   const gameHeight = scene.sys.game.config.height;
 
-  // let platformWidth = 285;
-  // let platformHeight = 55;
-
   const platformWidth = gameWidth / 10;
   const platformHeight = (gameHeight - 25) / 10;
 
-  gameMap.forEach((row, indexRow) => {
+  for (let i = 0; i < gameMap.length; i++) {
     let currntPlatformCellWidth = 0;
 
-    row.forEach((col, indexCol) => {
-      if (col === 1) {
+    for (let j = 0; j < gameMap[i].length; j++) {
+      if (gameMap[i][j] === 1) {
         currntPlatformCellWidth += 1;
       }
 
-      if (col === 0 || indexCol === row.length - 1) {
+      if (gameMap[i][j] === 0 || j === gameMap[i].length - 1) {
         if (currntPlatformCellWidth > 0) {
-          let endCol = col === 1 ? indexCol : indexCol - 1;
+          let endCol = gameMap[i][j] === 1 ? j : j - 1;
           let x =
             (endCol - currntPlatformCellWidth + 1) * platformWidth +
             (platformWidth * currntPlatformCellWidth) / 2;
-          let y = indexRow * platformHeight + platformHeight / 2;
+          let y = i * platformHeight + platformHeight / 2;
 
           let platform = scene.platforms.create(x, y, "platform");
           platform.displayHeight = platformHeight / 2;
@@ -56,8 +52,8 @@ function addPlatformsToScene(scene, gameMap) {
           currntPlatformCellWidth = 0;
         }
       }
-    });
-  });
+    }
+  }
 }
 
 /**
@@ -155,30 +151,30 @@ function removeAdjacentPlatform(gameMap) {
     [1, 1], // bottom right
   ];
 
-  gameMap.forEach((row, y) => {
-    row.forEach((platform, x) => {
-      if (platform) {
+  for (let i = 0; i < gameMap.length; i++) {
+    for (let j = 0; j < gameMap[i].length; j++) {
+      if (gameMap[i][j] === 1) {
         for (let [dx, dy] of directions) {
-          const gy = y + dx;
-          const gx = x + dy;
+          const gy = i + dx;
+          const gx = j + dy;
           if (
             gy >= 0 &&
             gy < gameMap.length &&
             gx >= 0 &&
-            gx < row.length &&
+            gx < gameMap[i].length &&
             gameMap[gy][gx] === 1
           ) {
             const shouldDeleteCurrentPlatform = Phaser.Math.Between(0, 1);
             if (shouldDeleteCurrentPlatform) {
-              gameMap[y][x] = 0;
+              gameMap[i][j] = 0;
             } else {
               gameMap[gy][gx] = 0;
             }
           }
         }
       }
-    });
-  });
+    }
+  }
 }
 
 function generatePlatforms() {
@@ -192,43 +188,4 @@ function generatePlatforms() {
   removeAdjacentPlatform(gameMap);
 
   return gameMap;
-}
-
-function collectStar() {}
-
-function generateCigarettes(scene) {
-  scene.platforms.children.iterate((platform) => {
-    if (Phaser.Math.Between(0, 1)) {
-      const x = platform.x;
-      const y = platform.y - 80;
-
-      const cigarette = scene.cigarettes.create(x, y, "cigarette");
-      cigarette.body.allowGravity = false;
-
-      const glowCircle = scene.add.graphics();
-      glowCircle.fillStyle(0xffffff, 0.5);
-      glowCircle.fillCircle(0, 0, 50);
-      glowCircle.setPosition(cigarette.x, cigarette.y);
-
-      scene.tweens.add({
-        targets: glowCircle,
-        alpha: { from: 0.5, to: 0 },
-        duration: 1000,
-        yoyo: true,
-        repeat: -1,
-        ease: "Sine.easeInOut",
-      });
-
-      cigarette.glowCircle = glowCircle;
-    }
-  });
-
-  scene.physics.add.collider(scene.cigarettes, scene.platforms);
-  scene.physics.add.overlap(
-    scene.player,
-    scene.cigarettes,
-    collectStar,
-    null,
-    scene
-  );
 }

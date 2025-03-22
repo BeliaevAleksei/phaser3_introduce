@@ -7,7 +7,8 @@ import GameManager from "../utils/gameManager.js";
 import EventEmitter from "../utils/eventEmmiter.js";
 import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 import wsService from "../services/WebSocketService.js";
-import { generateLevel } from "../utils/platformGeneration.js";
+import { generateLevel } from "../utils/generationPlatform.js";
+import { generateCigarettes } from "../utils/generationCigarette.js";
 
 export default class GameScene extends Scene {
   constructor() {
@@ -46,21 +47,15 @@ export default class GameScene extends Scene {
     wsService.send({ action: "update_score" });
   }
 
-  collectStar(player, star) {
-    star.disableBody(true, true);
+  collectCigarette(player, cigarette) {
+    this.tweens.killTweensOf(cigarette.glowCircle);
+    cigarette.glowCircle.destroy();
+    cigarette.destroy();
 
     this.updateScore(this.score + 10);
 
-    if (this.stars.countActive(true) === 0) {
-      this.stars.children.iterate((child) => {
-        child.enableBody(
-          true,
-          child.x,
-          Phaser.Math.Between(0, this.scale.height - 200),
-          true,
-          true
-        );
-      });
+    if (this.cigarettes.countActive(true) === 0) {
+      generateCigarettes(this);
       this.spawnBomb();
     }
   }
@@ -110,28 +105,13 @@ export default class GameScene extends Scene {
     this.score = 0;
     const gameWidth = this.sys.game.config.width;
     const gameHeight = this.sys.game.config.height;
+    const scale = (gameHeight - 25) / 10 / 55; // groundHeight countGameRows platformHeight
 
     const bg = this.add.image(0, 0, "sky2").setOrigin(0, 0);
     bg.displayWidth = gameWidth;
     bg.displayHeight = gameHeight;
-    this.cigarettes = this.physics.add.group();
 
-    // this.stars = this.physics.add.group({
-    //   key: "star",
-    //   repeat: 11,
-    //   setXY: {
-    //     x: 12,
-    //     y: Phaser.Math.Between(0, this.scale.displaySize.height),
-    //     stepX: 70,
-    //   },
-    // });
-    // this.stars.children.iterate((child) => {
-    //   child.y = Phaser.Math.Between(0, this.scale.height - 200);
-    //   child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
-    // });
-
-    this.player = new Player(this, 100, 450);
-    this.platforms = this.physics.add.staticGroup();
+    this.player = new Player(this, 100, 450, scale);
     const ground = this.physics.add.staticImage(
       gameWidth / 2,
       gameHeight - 12,
@@ -139,9 +119,14 @@ export default class GameScene extends Scene {
     );
     ground.displayWidth = gameWidth;
     ground.refreshBody();
+
+    this.platforms = this.physics.add.staticGroup();
     this.platforms.add(ground);
 
     generateLevel({ scene: this });
+
+    this.cigarettes = this.physics.add.group();
+    generateCigarettes(this);
 
     this.bombs = this.physics.add.group();
 
@@ -153,16 +138,17 @@ export default class GameScene extends Scene {
       this
     );
 
+    this.physics.add.collider(this.cigarettes, this.platforms);
+    this.physics.add.overlap(
+      this.player,
+      this.cigarettes,
+      this.collectCigarette,
+      null,
+      this
+    );
+
     this.physics.add.collider(this.player, this.platforms);
-    // this.physics.add.collider(this.stars, this.platforms);
     this.physics.add.collider(this.bombs, this.platforms);
-    // this.physics.add.overlap(
-    //   this.player,
-    //   this.stars,
-    //   this.collectStar,
-    //   null,
-    //   this
-    // );
     this.physics.add.collider(
       this.player,
       this.bombs,
