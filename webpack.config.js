@@ -50,15 +50,10 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.(jpg|jpeg|png|gif|svg)$/i,
-          use: [
-            {
-              loader: "url-loader",
-              options: {
-                limit: 8192,
-                name: "[path][name].[contenthash].[ext]",
-              },
-            },
-          ],
+          type: "asset/resource",
+          generator: {
+            filename: "[path][name].[contenthash][ext][query]",
+          },
         },
         {
           test: /\.html$/i,
