@@ -13,12 +13,6 @@ export function generateLevel({
 
   const gameMap = generatePlatforms();
   addPlatformsToScene(scene, gameMap);
-
-  if (scene.player) {
-    scene.physics.add.collider(scene.player, scene.platforms);
-  } else {
-    console.error("Ошибка: игрок не создан!");
-  }
 }
 
 function addPlatformsToScene(scene, gameMap) {
@@ -48,6 +42,7 @@ function addPlatformsToScene(scene, gameMap) {
           platform.displayHeight = platformHeight / 2;
           platform.displayWidth = platformWidth * currntPlatformCellWidth;
           platform.refreshBody();
+          scene.platforms.add(platform);
 
           currntPlatformCellWidth = 0;
         }

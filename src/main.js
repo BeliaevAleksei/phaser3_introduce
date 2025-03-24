@@ -12,9 +12,6 @@ const config = {
     mode: Phaser.Scale.RESIZE,
     parent: "phaser-game",
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    // width: 1980,
-    // height: 1024,
-    // zoom: 2,
   },
   physics: {
     default: "arcade",

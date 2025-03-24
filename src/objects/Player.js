@@ -2,7 +2,7 @@ import { Physics, Input } from "phaser";
 import GameManager from "../utils/gameManager.js";
 
 const SPEED = 160;
-const JUMP = -520;
+const JUMP = -620;
 
 export default class Player extends Physics.Arcade.Sprite {
   constructor(scene, x, y, scale) {
@@ -10,17 +10,18 @@ export default class Player extends Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
     this.isJumping = false;
-    this.jumpPower = JUMP * scale;
-    this.speedPower = SPEED * scale;
+    this.jumpPower = JUMP * scale + JUMP * scale * (scene.level / 4);
+    this.speedPower =
+      SPEED * scale * scene.level + SPEED * scale * (scene.level / 4);
     this.setCollideWorldBounds(true);
-    this.setMaxVelocity(160, 1000);
-    this.setGravityY(400);
+    this.setMaxVelocity(1600, 1000);
+    this.setGravityY(1000);
     this.setScale(scale * 0.7);
 
     scene.anims.create({
       key: "left",
       frames: scene.anims.generateFrameNumbers("dude", { start: 0, end: 3 }),
-      frameRate: 10,
+      frameRate: 5,
       repeat: -1,
     });
 
@@ -33,7 +34,7 @@ export default class Player extends Physics.Arcade.Sprite {
     scene.anims.create({
       key: "right",
       frames: scene.anims.generateFrameNumbers("dude", { start: 5, end: 8 }),
-      frameRate: 10,
+      frameRate: 5,
       repeat: -1,
     });
 
@@ -45,7 +46,7 @@ export default class Player extends Physics.Arcade.Sprite {
 
   update() {
     if (this.cursors.up.isDown && this.body.touching.down) {
-      this.setVelocityY(-520);
+      this.setVelocityY(this.jumpPower);
     }
 
     if (GameManager.getIsDesktop()) {

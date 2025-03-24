@@ -1,6 +1,5 @@
 import { Scene } from "phaser";
 import Player from "../objects/Player.js";
-import Platform from "../objects/Platform.js";
 import ScoreLabel from "../objects/ScoreLabel.js";
 import Bomb from "../objects/Bomb.js";
 import GameManager from "../utils/gameManager.js";
@@ -14,19 +13,20 @@ export default class GameScene extends Scene {
   constructor() {
     super({ key: "GameScene" });
     this.isGameOver = false;
+    this.level = 1;
   }
 
   preload() {
+    this.load.image("nightCityBg", "./assets/night-city-bg.png");
     this.load.image("nightCity", "./assets/night-city.png");
     this.load.image("clouds", "assets/night-city-cloud.png");
     this.load.image("platform", "./assets/night-platform.png");
     this.load.image("ground", "./assets/night-ground-platform.png");
-    this.load.image("star", "./assets/star.png");
-    this.load.image("bomb", "./assets/bomb.png");
+    this.load.image("heli1", "./assets/heli-1.png");
+    this.load.image("heli2", "./assets/heli-2.png");
     this.load.image("cigarette", "./assets/cigarette.png");
-    this.load.image("particle", "./assets/sigarete-practicle.png");
-    this.load.spritesheet("dude", "./assets/dude-2.png?v=1", {
-      frameWidth: 81,
+    this.load.spritesheet("dude", "./assets/dude.png?v=2", {
+      frameWidth: 51,
       frameHeight: 94,
       spacing: 5,
     });
@@ -54,8 +54,9 @@ export default class GameScene extends Scene {
     cigarette.destroy();
 
     this.updateScore(this.score + 10);
-
     if (this.cigarettes.countActive(true) === 0) {
+      this.level += 1;
+      this.regenerateLevel();
       generateCigarettes(this);
       this.spawnBomb();
     }
@@ -71,9 +72,10 @@ export default class GameScene extends Scene {
     bomb.setBounce(1); // fix that
     bomb.setCollideWorldBounds(true); // fix that
     let angle = Phaser.Math.Between(30, 150);
-    let speed = 200; // fix that
+    let speed = 200 + (200 * this.level) / 4; // fix that
     this.physics.velocityFromAngle(angle, speed, bomb.body.velocity); // fix that
     bomb.setGravityY(200); // fix that
+    bomb.anims.play("heliAnim", true);
   }
 
   gameOver() {
@@ -101,6 +103,38 @@ export default class GameScene extends Scene {
     this.gameOver();
   }
 
+  regenerateLevel() {
+    this.physics.pause();
+    this.platforms.clear(true, true);
+    let blinkDuration = 500;
+
+    this.children.each((child) => {
+      if (child.setAlpha) {
+        child.alpha = 1;
+        this.tweens.add({
+          targets: child,
+          alpha: 0,
+          duration: blinkDuration,
+          yoyo: true,
+          repeat: -1,
+          delay: 0,
+        });
+      }
+    });
+
+    this.time.delayedCall(2000, () => {
+      this.children.each((child) => {
+        if (child.setAlpha) {
+          this.tweens.killTweensOf(child);
+          child.alpha = 1;
+        }
+      });
+
+      this.physics.resume();
+    });
+    generateLevel({ scene: this });
+  }
+
   create() {
     wsService.connect();
     this.score = 0;
@@ -108,16 +142,19 @@ export default class GameScene extends Scene {
     const gameHeight = this.sys.game.config.height;
     const scale = (gameHeight - 25) / 10 / 55; // groundHeight countGameRows platformHeight
 
-    const bg = this.add.image(0, 0, "nightCity").setOrigin(0, 0);
-    bg.displayWidth = gameWidth;
-    bg.displayHeight = gameHeight;
+    const nightCityBG = this.add.image(0, 0, "nightCityBg").setOrigin(0, 0);
+    nightCityBG.displayWidth = gameWidth;
+    nightCityBG.displayHeight = gameHeight;
 
     this.clouds = this.add
       .tileSprite(0, 0, gameWidth, 85, "clouds")
       .setOrigin(0, 0);
-    // this.clouds.setScrollFactor(0.5); // Задаем скорость прокрутки фона
     this.clouds.displayHeight = (gameHeight / 10) * 4;
     this.clouds.displayWidth = gameWidth * 3;
+
+    const nightCity = this.add.image(0, 0, "nightCity").setOrigin(0, 0);
+    nightCity.displayWidth = gameWidth;
+    nightCity.displayHeight = gameHeight;
 
     this.player = new Player(this, 100, 450, scale);
     const ground = this.physics.add.staticImage(
@@ -127,9 +164,9 @@ export default class GameScene extends Scene {
     );
     ground.displayWidth = gameWidth;
     ground.refreshBody();
+    this.physics.add.collider(this.player, ground);
 
     this.platforms = this.physics.add.staticGroup();
-    this.platforms.add(ground);
 
     generateLevel({ scene: this });
 
@@ -166,6 +203,7 @@ export default class GameScene extends Scene {
     );
 
     this.scroreLabel = new ScoreLabel(this, 16, 16, 0, {
+      fontFamily: "PixelCyr",
       fontSize: "32px",
       fill: "#000",
     });
@@ -181,7 +219,14 @@ export default class GameScene extends Scene {
       });
     }
 
-    // this.spawnBomb();
+    this.anims.create({
+      key: "heliAnim",
+      frames: [{ key: "heli1" }, { key: "heli2" }],
+      frameRate: 10,
+      repeat: -1,
+    });
+
+    this.spawnBomb();
   }
 
   update() {
@@ -189,6 +234,6 @@ export default class GameScene extends Scene {
       return;
     }
     this.player.update();
-    this.clouds.tilePositionX += 0.5; // Скорость движения облаков
+    this.clouds.tilePositionX += 0.2; // Скорость движения облаков
   }
 }
