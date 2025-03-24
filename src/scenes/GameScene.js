@@ -25,7 +25,7 @@ export default class GameScene extends Scene {
     this.load.image("heli1", "./assets/heli-1.png");
     this.load.image("heli2", "./assets/heli-2.png");
     this.load.image("cigarette", "./assets/cigarette.png");
-    this.load.spritesheet("dude", "./assets/dude.png?v=2", {
+    this.load.spritesheet("dude", "./assets/dude.png", {
       frameWidth: 51,
       frameHeight: 94,
       spacing: 5,
