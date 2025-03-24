@@ -17,7 +17,8 @@ export default class GameScene extends Scene {
   }
 
   preload() {
-    this.load.image("sky2", "./assets/night-city.png");
+    this.load.image("nightCity", "./assets/night-city.png");
+    this.load.image("clouds", "assets/night-city-cloud.png");
     this.load.image("platform", "./assets/night-platform.png");
     this.load.image("ground", "./assets/night-ground-platform.png");
     this.load.image("star", "./assets/star.png");
@@ -107,9 +108,16 @@ export default class GameScene extends Scene {
     const gameHeight = this.sys.game.config.height;
     const scale = (gameHeight - 25) / 10 / 55; // groundHeight countGameRows platformHeight
 
-    const bg = this.add.image(0, 0, "sky2").setOrigin(0, 0);
+    const bg = this.add.image(0, 0, "nightCity").setOrigin(0, 0);
     bg.displayWidth = gameWidth;
     bg.displayHeight = gameHeight;
+
+    this.clouds = this.add
+      .tileSprite(0, 0, gameWidth, 85, "clouds")
+      .setOrigin(0, 0);
+    // this.clouds.setScrollFactor(0.5); // Задаем скорость прокрутки фона
+    this.clouds.displayHeight = (gameHeight / 10) * 4;
+    this.clouds.displayWidth = gameWidth * 3;
 
     this.player = new Player(this, 100, 450, scale);
     const ground = this.physics.add.staticImage(
@@ -181,5 +189,6 @@ export default class GameScene extends Scene {
       return;
     }
     this.player.update();
+    this.clouds.tilePositionX += 0.5; // Скорость движения облаков
   }
 }
