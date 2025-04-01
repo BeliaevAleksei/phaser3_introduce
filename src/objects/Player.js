@@ -2,7 +2,7 @@ import { Physics, Input } from "phaser";
 import GameManager from "../utils/gameManager.js";
 
 const SPEED = 160;
-const JUMP = -620;
+const JUMP = -360;
 
 export default class Player extends Physics.Arcade.Sprite {
   constructor(scene, x, y, scale) {

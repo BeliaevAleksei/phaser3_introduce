@@ -64,11 +64,21 @@ export default class BootScene extends Scene {
         .setOrigin(0.5, 0);
     });
 
+    if (!this.sys.game.device.os.desktop) {
+      import("./UnsupportMobileScene").then((res) => {
+        const GameScene = res.default;
+        this.scene.add("UnsupportMobileScene", GameScene);
+        this.scene.start("UnsupportMobileScene");
+      });
+
+      return;
+    }
+
     Promise.all([
       new Promise((res) => {
         setTimeout(() => {
           res("good");
-        }, 2500);
+        }, 500);
       }),
       import("./GameScene"),
     ]).then((res) => {

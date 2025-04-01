@@ -1,10 +1,10 @@
 import { Scene } from "phaser";
 import Player from "../objects/Player.js";
 import ScoreLabel from "../objects/ScoreLabel.js";
-import Bomb from "../objects/Bomb.js";
+import Drone from "../objects/Drone.js";
 import GameManager from "../utils/gameManager.js";
 import EventEmitter from "../utils/eventEmmiter.js";
-import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
+// import VirtualJoystickPlugin from "phaser3-rex-plugins/plugins/virtualjoystick-plugin.js";
 import wsService from "../services/WebSocketService.js";
 import { generateLevel } from "../utils/generationPlatform.js";
 import { generateCigarettes } from "../utils/generationCigarette.js";
@@ -14,16 +14,23 @@ export default class GameScene extends Scene {
     super({ key: "GameScene" });
     this.isGameOver = false;
     this.level = 1;
+    this.score = 0;
   }
 
   preload() {
+    this.load.spritesheet("hearts", "./assets/heart.png", {
+      frameWidth: 17,
+      frameHeight: 17,
+    });
     this.load.image("nightCityBg", "./assets/night-city-bg.png");
     this.load.image("nightCity", "./assets/night-city.png");
     this.load.image("clouds", "assets/night-city-cloud.png");
     this.load.image("platform", "./assets/night-platform.png");
     this.load.image("ground", "./assets/night-ground-platform.png");
-    this.load.image("heli1", "./assets/heli-1.png");
-    this.load.image("heli2", "./assets/heli-2.png");
+    this.load.spritesheet("drone", "./assets/drone.png", {
+      frameWidth: 55,
+      frameHeight: 48,
+    });
     this.load.image("cigarette", "./assets/cigarette.png");
     this.load.spritesheet("dude", "./assets/dude.png", {
       frameWidth: 51,
@@ -37,9 +44,9 @@ export default class GameScene extends Scene {
       GameManager.updateIsDesktop(false);
     }
 
-    if (!GameManager.getIsDesktop()) {
-      this.load.plugin("rexvirtualjoystickplugin", VirtualJoystickPlugin, true);
-    }
+    // if (!GameManager.getIsDesktop()) {
+    //   this.load.plugin("rexvirtualjoystickplugin", VirtualJoystickPlugin, true);
+    // }
   }
 
   updateScore(score) {
@@ -58,24 +65,26 @@ export default class GameScene extends Scene {
       this.level += 1;
       this.regenerateLevel();
       generateCigarettes(this);
-      this.spawnBomb();
+      this.spawnDrone();
     }
   }
 
-  spawnBomb() {
+  spawnDrone() {
     var x =
       this.player.x < 400
         ? Phaser.Math.Between(400, 800)
         : Phaser.Math.Between(0, 400);
-    const bomb = new Bomb(this, x, 16);
-    this.bombs.add(bomb);
-    bomb.setBounce(1); // fix that
-    bomb.setCollideWorldBounds(true); // fix that
-    let angle = Phaser.Math.Between(30, 150);
-    let speed = 200 + (200 * this.level) / 4; // fix that
-    this.physics.velocityFromAngle(angle, speed, bomb.body.velocity); // fix that
-    bomb.setGravityY(200); // fix that
-    bomb.anims.play("heliAnim", true);
+    this.drones.add(new Drone(this, x, 16));
+
+    // const bomb = new Bomb(this, x, 16);
+    // this.bombs.add(bomb);
+    // bomb.setBounce(1); // fix that
+    // bomb.setCollideWorldBounds(true); // fix that
+    // let angle = Phaser.Math.Between(30, 150);
+    // let speed = 200 + (200 * this.level) / 4; // fix that
+    // this.physics.velocityFromAngle(angle, speed, bomb.body.velocity); // fix that
+    // bomb.setGravityY(200); // fix that
+    // bomb.anims.play("heliAnim", true);
   }
 
   gameOver() {
@@ -96,17 +105,18 @@ export default class GameScene extends Scene {
       });
   }
 
-  hitBomb(player, bomb) {
+  hitDrone(player, bomb) {
     player.setTint(0xff0000);
-    player.anims.play("turn");
-    this.isGameOver = true;
-    this.gameOver();
+    this.takeDamage(1);
+    this.time.delayedCall(200, () => {
+      player.clearTint();
+    });
   }
 
   regenerateLevel() {
     this.physics.pause();
     this.platforms.clear(true, true);
-    let blinkDuration = 500;
+    let blinkDuration = 1000;
 
     this.children.each((child) => {
       if (child.setAlpha) {
@@ -135,9 +145,32 @@ export default class GameScene extends Scene {
     generateLevel({ scene: this });
   }
 
+  takeDamage(amount) {
+    this.health = Math.max(this.health - amount * 2, 0);
+    this.updateHearts();
+
+    if (this.health === 0) {
+      this.player.anims.play("turn");
+      this.isGameOver = true;
+      this.gameOver();
+    }
+  }
+
+  updateHearts() {
+    for (let i = 0; i < this.maxHearts; i++) {
+      let heartIndex = i * 2;
+      if (this.health > heartIndex + 1) {
+        this.hearts[i].setFrame(0); // Полное сердце
+      } else if (this.health === heartIndex + 1) {
+        this.hearts[i].setFrame(1); // Половина сердца
+      } else {
+        this.hearts[i].setFrame(2); // Пустое сердце
+      }
+    }
+  }
+
   create() {
     wsService.connect();
-    this.score = 0;
     const gameWidth = this.sys.game.config.width;
     const gameHeight = this.sys.game.config.height;
     const scale = (gameHeight - 25) / 10 / 55; // groundHeight countGameRows platformHeight
@@ -164,7 +197,6 @@ export default class GameScene extends Scene {
     );
     ground.displayWidth = gameWidth;
     ground.refreshBody();
-    this.physics.add.collider(this.player, ground);
 
     this.platforms = this.physics.add.staticGroup();
 
@@ -173,12 +205,57 @@ export default class GameScene extends Scene {
     this.cigarettes = this.physics.add.group();
     generateCigarettes(this);
 
-    this.bombs = this.physics.add.group();
+    this.scroreLabel = new ScoreLabel(this, 16, 16, 0, {
+      fontFamily: "PixelCyr",
+      fontSize: "32px",
+      fill: "#000",
+    });
 
-    this.physics.add.collider(
+    // if (!GameManager.getIsDesktop()) {
+    //   this.joystick1 = this.plugins.get("rexvirtualjoystickplugin").add(this, {
+    //     x: this.scale.width - 110,
+    //     y: this.scale.height - 110,
+    //     radius: 80,
+    //     base: this.add.circle(0, 0, 80, 0x888888),
+    //     thumb: this.add.circle(0, 0, 40, 0xffffff),
+    //     dir: 2,
+    //   });
+    // }
+
+    this.maxHearts = 3;
+    this.health = this.maxHearts * 2;
+    this.heartSize = 34;
+
+    this.hearts = [];
+
+    for (let i = 0; i < this.maxHearts; i++) {
+      let heart = this.add.image(50 + i * (this.heartSize + 5), 50, "hearts");
+      heart.setDisplaySize(this.heartSize, this.heartSize);
+      this.hearts.push(heart);
+    }
+
+    this.updateHearts();
+
+    this.anims.create({
+      key: "droneRedBlink",
+      frames: [{ key: "drone", frame: 0 }],
+      frameRate: 2,
+    });
+
+    this.anims.create({
+      key: "droneBlueBlink",
+      frames: [{ key: "drone", frame: 1 }],
+      frameRate: 2,
+    });
+
+    this.drones = this.physics.add.group();
+
+    this.physics.add.collider(this.player, ground);
+    this.physics.add.collider(this.drones, ground);
+    this.physics.add.overlap(
       this.player,
-      this.bombs,
-      this.hitBomb,
+      this.drones,
+      this.hitDrone,
       null,
       this
     );
@@ -193,40 +270,16 @@ export default class GameScene extends Scene {
     );
 
     this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.collider(this.bombs, this.platforms);
+    this.physics.add.collider(this.drones, this.platforms);
     this.physics.add.collider(
       this.player,
-      this.bombs,
-      this.hitBomb,
+      this.drones,
+      this.hitDrone,
       null,
       this
     );
 
-    this.scroreLabel = new ScoreLabel(this, 16, 16, 0, {
-      fontFamily: "PixelCyr",
-      fontSize: "32px",
-      fill: "#000",
-    });
-
-    if (!GameManager.getIsDesktop()) {
-      this.joystick1 = this.plugins.get("rexvirtualjoystickplugin").add(this, {
-        x: this.scale.width - 110,
-        y: this.scale.height - 110,
-        radius: 80,
-        base: this.add.circle(0, 0, 80, 0x888888),
-        thumb: this.add.circle(0, 0, 40, 0xffffff),
-        dir: 2,
-      });
-    }
-
-    this.anims.create({
-      key: "heliAnim",
-      frames: [{ key: "heli1" }, { key: "heli2" }],
-      frameRate: 10,
-      repeat: -1,
-    });
-
-    this.spawnBomb();
+    this.spawnDrone();
   }
 
   update() {
@@ -234,6 +287,7 @@ export default class GameScene extends Scene {
       return;
     }
     this.player.update();
-    this.clouds.tilePositionX += 0.2; // Скорость движения облаков
+    this.clouds.tilePositionX += 0.1;
+    this.drones.getChildren().forEach((drone) => drone.update());
   }
 }
