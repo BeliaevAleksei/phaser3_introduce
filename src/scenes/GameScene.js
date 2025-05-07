@@ -15,6 +15,10 @@ export default class GameScene extends Scene {
     this.isGameOver = false;
     this.level = 1;
     this.score = 0;
+    this.activeDrones = [];
+    this.maxDrones = 4;
+    this.lastDamageTime = 0;
+    this.damageCooldown = 1000;
   }
 
   preload() {
@@ -64,27 +68,43 @@ export default class GameScene extends Scene {
     if (this.cigarettes.countActive(true) === 0) {
       this.level += 1;
       this.regenerateLevel();
-      generateCigarettes(this);
-      this.spawnDrone();
     }
   }
 
-  spawnDrone() {
-    var x =
-      this.player.x < 400
-        ? Phaser.Math.Between(400, 800)
-        : Phaser.Math.Between(0, 400);
-    this.drones.add(new Drone(this, x, 16));
+  deleteDrones() {
+    this.activeDrones.forEach((item) => {
+      item.destroy();
+    });
+    this.activeDrones = [];
+  }
 
-    // const bomb = new Bomb(this, x, 16);
-    // this.bombs.add(bomb);
-    // bomb.setBounce(1); // fix that
-    // bomb.setCollideWorldBounds(true); // fix that
-    // let angle = Phaser.Math.Between(30, 150);
-    // let speed = 200 + (200 * this.level) / 4; // fix that
-    // this.physics.velocityFromAngle(angle, speed, bomb.body.velocity); // fix that
-    // bomb.setGravityY(200); // fix that
-    // bomb.anims.play("heliAnim", true);
+  spawnDrone() {
+    const platforms = this.platforms.getChildren();
+    const availablePlatforms = platforms.filter((p) => !p.hasDrone);
+
+    if (availablePlatforms.length === 0) {
+      console.warn("Нет свободных платформ для спавна дронов");
+      return;
+    }
+
+    if (this.activeDrones.length >= this.maxDrones) {
+      const oldDrone = this.activeDrones.shift();
+
+      oldDrone.platform.hasDrone = false;
+      oldDrone.destroy();
+    }
+
+    const platform = Phaser.Utils.Array.GetRandom(availablePlatforms);
+
+    const drone = new Drone(this, platform);
+    this.drones.add(drone);
+    drone.body.setAllowGravity(false);
+    drone.setImmovable(true);
+
+    drone.platform = platform;
+    platform.hasDrone = true;
+
+    this.activeDrones.push(drone);
   }
 
   gameOver() {
@@ -105,8 +125,21 @@ export default class GameScene extends Scene {
       });
   }
 
-  hitDrone(player, bomb) {
+  hitDrone(player, drone) {
     player.setTint(0xff0000);
+    const pushDirection = new Phaser.Math.Vector2(
+      player.x - drone.x,
+      player.y - drone.y
+    );
+
+    pushDirection.normalize();
+
+    const pushStrength = 500;
+    player.body.setVelocity(
+      pushDirection.x * pushStrength,
+      pushDirection.y * pushStrength
+    );
+
     this.takeDamage(1);
     this.time.delayedCall(200, () => {
       player.clearTint();
@@ -116,6 +149,7 @@ export default class GameScene extends Scene {
   regenerateLevel() {
     this.physics.pause();
     this.platforms.clear(true, true);
+    this.deleteDrones();
     let blinkDuration = 1000;
 
     this.children.each((child) => {
@@ -142,10 +176,27 @@ export default class GameScene extends Scene {
 
       this.physics.resume();
     });
+
     generateLevel({ scene: this });
+    generateCigarettes(this);
+    for (
+      let i = 0;
+      i < (this.level + 1 > this.maxDrones ? this.maxDrones : this.level + 1);
+      i++
+    ) {
+      this.spawnDrone();
+    }
   }
 
   takeDamage(amount) {
+    const currentTime = this.time.now;
+
+    if (currentTime - this.lastDamageTime < this.damageCooldown) {
+      return;
+    }
+
+    this.lastDamageTime = currentTime;
+
     this.health = Math.max(this.health - amount * 2, 0);
     this.updateHearts();
 
@@ -229,7 +280,11 @@ export default class GameScene extends Scene {
     this.hearts = [];
 
     for (let i = 0; i < this.maxHearts; i++) {
-      let heart = this.add.image(50 + i * (this.heartSize + 5), 50, "hearts");
+      let heart = this.add.image(
+        gameWidth - 120 + i * (this.heartSize + 5),
+        32,
+        "hearts"
+      );
       heart.setDisplaySize(this.heartSize, this.heartSize);
       this.hearts.push(heart);
     }
@@ -282,12 +337,12 @@ export default class GameScene extends Scene {
     this.spawnDrone();
   }
 
-  update() {
+  update(time, delta) {
     if (this.isGameOver) {
       return;
     }
     this.player.update();
     this.clouds.tilePositionX += 0.1;
-    this.drones.getChildren().forEach((drone) => drone.update());
+    this.drones.getChildren().forEach((drone) => drone.update(time, delta));
   }
 }

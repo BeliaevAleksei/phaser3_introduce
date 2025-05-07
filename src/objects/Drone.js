@@ -1,99 +1,60 @@
 export default class Drone extends Phaser.Physics.Arcade.Sprite {
-  constructor(scene, x, y) {
-    super(scene, x, y, "drone"); // 'drone' — это ключ спрайта
+  constructor(scene, platform) {
+    // Спавн в центре платформы по x, чуть выше по y
+    super(scene, platform.x, platform.y - 80, "drone"); // выше платформы
 
     scene.add.existing(this);
     scene.physics.add.existing(this);
+    this.body.setAllowGravity(false);
 
     this.scene = scene;
-    this.speed = 150;
-    this.avoidDistance = 80; // Дистанция обхода препятствий
-    this.maxSteer = 8; // Ограничение на изменение вектора движения
-    this.velocity = new Phaser.Math.Vector2(
-      Phaser.Math.Between(-100, 100),
-      Phaser.Math.Between(-100, 100)
-    );
-    this.acceleration = new Phaser.Math.Vector2(0, 0);
+    this.platform = platform;
+    this.speed = 60;
+    this.direction = 1;
 
-    // Переключатель для анимации
-    this.isRed = true; // Красная лампа изначально
-    this.timeToSwitch = 0; // Время для переключения
+    this.startX = platform.getTopLeft().x + 20;
+    this.endX = platform.getTopRight().x - 20;
+
+    this.setX(this.startX);
+
+    // Мерцание
+    this.isRed = true;
+    this.timeToSwitch = 0;
+
+    // Параметры покачивания
+    this.baseY = this.y;
+    this.waveAmplitude = 5;
+    this.waveSpeed = 0.0015; // медленнее волна
+    this.elapsed = 0;
   }
 
   update(time, delta) {
-    // Получаем игрока и препятствия
-    let player = this.scene.player; // Предполагаем, что у нас есть игрок
-    let obstacles = this.scene.platforms.getChildren(); // Платформы как объекты
+    // Горизонтальное движение
+    this.x += this.direction * this.speed * (delta / 1000);
 
-    this.seek(player); // Преследовать игрока
-    this.avoidObstacles(obstacles, delta); // Избегать препятствий
+    if (this.x >= this.endX) {
+      this.x = this.endX;
+      this.direction = -1;
+    } else if (this.x <= this.startX) {
+      this.x = this.startX;
+      this.direction = 1;
+    }
 
-    this.velocity.add(this.acceleration);
-    this.velocity.limit(this.speed); // Ограничиваем скорость
+    this.elapsed += delta;
+    this.y =
+      this.baseY + Math.sin(this.elapsed * this.waveSpeed) * this.waveAmplitude;
 
-    this.x += this.velocity.x * (delta / 1000); // Применяем delta для времени
-    this.y += this.velocity.y * (delta / 1000); // Применяем delta для времени
-
-    this.acceleration.set(0, 0); // Сбрасываем ускорение
-
-    // Переключаем анимацию лампы по таймеру
+    // Мерцание лампы
     this.timeToSwitch -= delta;
     if (this.timeToSwitch <= 0) {
-      this.timeToSwitch = Phaser.Math.Between(500, 1500); // Случайный интервал для переключения
-      this.isRed = !this.isRed; // Переключаем состояние лампы
+      this.timeToSwitch = Phaser.Math.Between(500, 1500);
+      this.isRed = !this.isRed;
 
-      // Выбираем анимацию в зависимости от состояния лампы
       if (this.isRed) {
-        this.anims.play("droneRedBlink", true); // Включаем анимацию красной лампы
+        this.anims.play("droneRedBlink", true);
       } else {
-        this.anims.play("droneBlueBlink", true); // Включаем анимацию синей лампы
+        this.anims.play("droneBlueBlink", true);
       }
-    }
-  }
-
-  // Преследование игрока
-  seek(target) {
-    if (!target) return;
-
-    let desired = new Phaser.Math.Vector2(target.x - this.x, target.y - this.y);
-    desired.normalize().scale(this.speed);
-
-    let steer = desired.subtract(this.velocity);
-    steer.limit(this.maxSteer); // Ограничиваем силу отклонения
-
-    this.acceleration.add(steer);
-  }
-
-  // Избегание препятствий
-  avoidObstacles(obstacles, delta) {
-    let avoidance = new Phaser.Math.Vector2(0, 0); // Вектор для избегания
-
-    obstacles.forEach((obstacle) => {
-      // Проверка расстояния до препятствия
-      let dist = Phaser.Math.Distance.Between(
-        this.x,
-        this.y,
-        obstacle.x,
-        obstacle.y
-      );
-      if (dist < this.avoidDistance) {
-        // Рассчитываем направление для избегания столкновения
-        let avoidDir = new Phaser.Math.Vector2(
-          this.x - obstacle.x,
-          this.y - obstacle.y
-        );
-        avoidDir.normalize(); // Нормализуем вектор
-        avoidDir.scale(1 / dist); // Увеличиваем силу избегания, чем ближе к препятствию
-
-        // Корректируем направление
-        avoidance.add(avoidDir);
-      }
-    });
-
-    // Применяем изменения на основании избегания
-    if (avoidance.length() > 0) {
-      avoidance.normalize().scale(this.speed); // Нормализуем и масштабируем
-      this.acceleration.add(avoidance); // Применяем ускорение на основе избегания
     }
   }
 }
