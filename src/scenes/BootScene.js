@@ -78,7 +78,7 @@ export default class BootScene extends Scene {
       new Promise((res) => {
         setTimeout(() => {
           res("good");
-        }, 500);
+        }, 2500);
       }),
       import("./GameScene"),
     ]).then((res) => {
