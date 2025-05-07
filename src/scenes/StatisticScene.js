@@ -6,6 +6,8 @@ export default class StatisticScene extends Scene {
   }
 
   restart() {
+    this.backgroundRect?.destroy();
+
     if (this.game.scene.getScene("GameScene")) {
       this.game.scene.remove("GameScene");
     }
@@ -21,18 +23,17 @@ export default class StatisticScene extends Scene {
       });
   }
 
-  preload() {
-    this.load.image("sky", "./assets/sky.png");
-  }
+  preload() {}
 
   displayLeaders(scene, leaders) {
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
 
-    const text = "Топ 5 лидеров";
+    const text = "Топ 5 накрутчиков (осуждаем)";
     scene.add
       .text(width / 2, height / 3 - 35, text, {
-        font: "24px Arial",
+        fontFamily: "PixelCyr",
+        fontSize: "24px",
         fill: "#ffffff",
       })
       .setOrigin(0.5, 1);
@@ -44,31 +45,41 @@ export default class StatisticScene extends Scene {
 
     scene.add
       .text(width / 2, height / 3, players, {
-        font: "24px Arial",
+        fontFamily: "PixelCyr",
+        fontSize: "24px",
         fill: "#ffffff",
       })
       .setOrigin(0.5, 0.1);
   }
 
   create(data) {
-    this.add.image(400, 300, "sky");
+    const gameWidth = this.sys.game.config.width;
+    const gameHeight = this.sys.game.config.height;
 
-    const width = this.cameras.main.width;
-    const height = this.cameras.main.height;
+    this.backgroundRect = this.add
+      .rectangle(0, 0, gameWidth, gameHeight, 0x000000)
+      .setOrigin(0, 0);
 
     this.displayLeaders(this, data.players);
 
     const scoreText = this.add
-      .text(width / 2, height / 1.5, `Вы набрали: ${data.score} очков!`, {
-        fontSize: "32px",
-        fill: "#000",
-      })
+      .text(
+        gameWidth / 2,
+        gameHeight / 1.5,
+        `Вы набрали: ${data.score} очков!`,
+        {
+          fontFamily: "PixelCyr",
+          fontSize: "32px",
+          fill: "#ffffff",
+        }
+      )
       .setOrigin(0.5, 0.5);
 
     const restartButton = this.add
-      .text(width / 2, height / 1.2, "Играть снова", {
+      .text(gameWidth / 2, gameHeight / 1.2, "> Играть снова <", {
+        fontFamily: "PixelCyr",
         fontSize: "32px",
-        fill: "#000",
+        fill: "#ffffff",
       })
       .setOrigin(0.5)
       .setInteractive()

@@ -3,10 +3,16 @@ body {
   width: 100%;
   height: 100vh;
   background-color: black;
+  font-family: "Press Start 2P", cursive;
 }
 
 #phaser-game {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@font-face {
+  font-family: "PixelCyr";
+  src: url("../assets/fonts/pixelcyr_normal.ttf") format("truetype");
 }

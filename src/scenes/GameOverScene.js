@@ -9,16 +9,13 @@ export default class GameOverScene extends Scene {
     this.handleChangeScene = this.changeScene.bind(this);
   }
 
-  preload() {
-    this.load.image("sky", "./assets/sky.png");
-  }
-
   changeScene(event) {
     const data = JSON.parse(event.data);
 
     if (data.type === "save_success") {
       wsService.socket.removeEventListener("message", this.handleChangeScene);
       this.playerInput.destroy();
+      this.backgroundRect?.destroy();
 
       if (this.game.scene.getScene("StatisticScene")) {
         this.scene.start("StatisticScene", {
@@ -51,7 +48,13 @@ export default class GameOverScene extends Scene {
     wsService.socket.addEventListener("message", this.handleChangeScene);
     this.input.keyboard.clearCaptures();
     this.score = data.score;
-    this.add.image(400, 300, "sky");
+    const gameWidth = this.sys.game.config.width;
+    const gameHeight = this.sys.game.config.height;
+
+    this.backgroundRect = this.add
+      .rectangle(0, 0, gameWidth, gameHeight, 0x000000)
+      .setOrigin(0, 0);
+
     wsService.send({ action: "end_game" });
     const userName = localStorage.getItem("userName");
 
