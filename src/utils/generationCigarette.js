@@ -1,4 +1,4 @@
-export function generateCigarettes(scene) {
+export function generateCigarettes(scene, scale) {
   const randomizedCigarettes = randomizer(
     scene.platforms?.children?.entries?.length || 0,
     3
@@ -11,10 +11,12 @@ export function generateCigarettes(scene) {
 
       const cigarette = scene.cigarettes.create(x, y, "cigarette");
       cigarette.body.allowGravity = false;
+      console.log("DDL scale", scale);
+      cigarette.setScale(scale * 0.7);
 
       const glowCircle = scene.add.graphics();
       glowCircle.fillStyle(0xffffff, 0.5);
-      glowCircle.fillCircle(0, 0, 50);
+      glowCircle.fillCircle(0, 0, 50 * scale * 0.7);
       glowCircle.setPosition(cigarette.x, cigarette.y);
 
       scene.tweens.add({
