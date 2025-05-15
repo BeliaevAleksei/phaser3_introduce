@@ -81,11 +81,12 @@ export default class BootScene extends Scene {
         }, 500);
       }),
       import("./GameScene"),
+      import("./StartScene"),
     ]).then((res) => {
       this.backgroundRect?.destroy();
-      const GameScene = res[1].default;
-      this.scene.add("GameScene", GameScene);
-      this.scene.start("GameScene");
+      const StartScene = res[2].default;
+      this.scene.add("StartScene", StartScene);
+      this.scene.start("StartScene");
     });
   }
 }

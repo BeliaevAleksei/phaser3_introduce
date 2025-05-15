@@ -8,6 +8,10 @@ import EventEmitter from "../utils/eventEmmiter.js";
 import wsService from "../services/WebSocketService.js";
 import { generateLevel } from "../utils/generationPlatform.js";
 import { generateCigarettes } from "../utils/generationCigarette.js";
+import {
+  MeguminSpawnController,
+  MEGUMIN_SPAWN_STATE,
+} from "../controllers/MeguminSpawnController.js";
 
 export default class GameScene extends Scene {
   constructor() {
@@ -28,12 +32,17 @@ export default class GameScene extends Scene {
     });
     this.load.image("nightCityBg", "./assets/night-city-bg.png");
     this.load.image("nightCity", "./assets/night-city.png");
-    this.load.image("clouds", "assets/night-city-cloud.png");
+    this.load.image("clouds", "./assets/night-city-cloud.png");
     this.load.image("platform", "./assets/night-platform.png");
     this.load.image("ground", "./assets/night-ground-platform.png");
+    this.load.spritesheet("megu", "./assets/megu.png", {
+      frameWidth: 87,
+      frameHeight: 94,
+      spacing: 4,
+    });
     this.load.spritesheet("car", "./assets/car.png", {
-      frameWidth: 386, // ширина одного кадра
-      frameHeight: 103, // высота одного кадра
+      frameWidth: 386,
+      frameHeight: 103,
       spacing: 4,
     });
     this.load.spritesheet("drone", "./assets/drone.png", {
@@ -46,6 +55,8 @@ export default class GameScene extends Scene {
       frameHeight: 94,
       spacing: 5,
     });
+
+    this.load.audio("bgMusic", "./assets/music/bgMusic.mp3");
 
     if (this.sys.game.device.os.desktop) {
       GameManager.updateIsDesktop(true);
@@ -246,13 +257,13 @@ export default class GameScene extends Scene {
     nightCity.displayHeight = gameHeight;
 
     this.player = new Player(this, 100, 450, this.scale);
-    const ground = this.physics.add.staticImage(
+    this.ground = this.physics.add.staticImage(
       gameWidth / 2,
       gameHeight - 12,
       "ground"
     );
-    ground.displayWidth = gameWidth;
-    ground.refreshBody();
+    this.ground.displayWidth = gameWidth * 2;
+    this.ground.refreshBody();
 
     this.platforms = this.physics.add.staticGroup();
 
@@ -313,8 +324,8 @@ export default class GameScene extends Scene {
     this.anims.create({
       key: "car-drive",
       frames: this.anims.generateFrameNumbers("car", { start: 1, end: 3 }),
-      frameRate: 5,
-      repeat: -1, // бесконечно
+      frameRate: 8,
+      repeat: -1,
     });
     this.anims.create({
       key: "car-wait",
@@ -322,18 +333,34 @@ export default class GameScene extends Scene {
       frameRate: 5,
     });
 
-    this.car = this.physics.add.sprite(-300, 400, "car");
-    this.car.setVelocityX(200);
-    this.car.play("car-drive");
-    this.car.setScale(this.scale * 0.7);
+    // this.meguController = new MeguminSpawnController(this);
+    // this.meguController.setState(MEGUMIN_SPAWN_STATE.DRIVING_IN);
+    // this.car = this.physics.add.sprite(-600, gameHeight - 100, "car");
+    // this.car.setVelocityX(400);
+    // this.car.play("car-drive");
+    // this.car.setScale(this.scale * 0.7);
 
-    this.physics.add.collider(this.car, ground);
+    // this.physics.add.collider(this.car, ground);
     this.physics.add.collider(this.drones, this.platforms);
+
+    // this.carSound = new ThreeDSound(this, "./assets/music/axel.mp3", this.car, gameWidth + 100, gameWidth / 5);
+    // this.carSound.initOnUserInput();
 
     this.centerReached = false;
 
-    this.physics.add.collider(this.player, ground);
-    this.physics.add.collider(this.drones, ground);
+    // this.anims.create({
+    //   key: "megu-cast",
+    //   frames: this.anims.generateFrameNumbers("megu", { start: 0, end: 2 }),
+    //   frameRate: 2,
+    //   repeat: -1,
+    // });
+    // this.megu = this.physics.add.sprite(100, 400, "megu");
+    // this.megu.play("megu-cast");
+    // this.physics.add.collider(this.megu, ground);
+    // this.physics.add.collider(this.megu, this.platforms);
+
+    this.physics.add.collider(this.player, this.ground);
+    this.physics.add.collider(this.drones, this.ground);
     this.physics.add.overlap(
       this.player,
       this.drones,
@@ -362,39 +389,48 @@ export default class GameScene extends Scene {
     );
 
     this.spawnDrone();
+    this.bdMusic = this.sound.add("bgMusic", {
+      loop: true,
+      volume: 0.5,
+    });
+
+    // Запускаем музыку
+    this.bdMusic.play();
   }
 
   updateCar() {
     const centerX = this.cameras.main.centerX;
 
     // Останавливаем машину в центре
-    if (!this.centerReached && this.car.x >= centerX) {
-      this.car.setVelocityX(0);
-      this.centerReached = true;
-      this.car.anims.play("car-wait", true);
-      // Вызывает выход персонажа через 1 секунду
-      // this.time.delayedCall(1000, () => {
-      //   this.character = this.physics.add.sprite(
-      //     this.car.x,
-      //     this.car.y,
-      //     "character"
-      //   );
-      //   this.character.setVelocityY(-100);
+    // if (!this.centerReached && this.car.x >= centerX) {
+    //   this.car.setVelocityX(0);
+    //   this.centerReached = true;
+    //   this.car.anims.play("car-wait", true);
+    // Вызывает выход персонажа через 1 секунду
+    // this.time.delayedCall(1000, () => {
+    //   this.character = this.physics.add.sprite(
+    //     this.car.x,
+    //     this.car.y,
+    //     "character"
+    //   );
+    //   this.character.setVelocityY(-100);
 
-      //   // Заклинание и взрыв через 2 секунды
-      //   this.time.delayedCall(2000, () => {
-      //     this.castSpell();
-      //   });
-      // });
-    }
+    //   // Заклинание и взрыв через 2 секунды
+    //   this.time.delayedCall(2000, () => {
+    //     this.castSpell();
+    //   });
+    // });
+    // }
   }
 
   update(time, delta) {
     if (this.isGameOver) {
       return;
     }
+
     this.player.update();
-    this.updateCar();
+    // this.updateCar();
+    // this.meguController.update(time, delta);
     this.clouds.tilePositionX += 0.1;
     this.drones.getChildren().forEach((drone) => drone.update(time, delta));
   }
