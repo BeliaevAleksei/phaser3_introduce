@@ -15,6 +15,7 @@ export default class Car extends Phaser.Physics.Arcade.Sprite {
   move() {
     // this.setVelocityX(400);
     this.play("car-drive");
+    console.log('Test')
   }
 
   stop() {
