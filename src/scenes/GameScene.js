@@ -369,6 +369,8 @@ export default class GameScene extends Scene {
       this
     );
 
+    console.log('DDL test')
+
     this.physics.add.collider(this.cigarettes, this.platforms);
     this.physics.add.overlap(
       this.player,
