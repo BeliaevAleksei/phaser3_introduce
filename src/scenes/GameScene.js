@@ -35,7 +35,7 @@ export default class GameScene extends Scene {
     this.load.image("clouds", "./assets/night-city-cloud.png");
     this.load.image("platform", "./assets/night-platform.png");
     this.load.image("ground", "./assets/night-ground-platform.png");
-    this.load.spritesheet("megu", "./assets/megu.png", {
+    this.load.spritesheet("megumin", "./assets/megu.png", {
       frameWidth: 87,
       frameHeight: 94,
       spacing: 4,
@@ -57,6 +57,9 @@ export default class GameScene extends Scene {
     });
 
     this.load.audio("bgMusic", "./assets/music/bgMusic.mp3");
+    this.load.audio("carSound", "./assets/music/axel.mp3");
+    this.load.audio("carDoor", "./assets/music/door.mp3");
+    this.load.audio("meguminExplosion", "./assets/music/meguminExplosion.mp3");
 
     if (this.sys.game.device.os.desktop) {
       GameManager.updateIsDesktop(true);
@@ -217,7 +220,7 @@ export default class GameScene extends Scene {
     this.updateHearts();
 
     if (this.health === 0) {
-      this.player.anims.play("turn");
+      this.player.anims.play("dudeTurn");
       this.isGameOver = true;
       this.gameOver();
     }
@@ -255,6 +258,26 @@ export default class GameScene extends Scene {
     const nightCity = this.add.image(0, 0, "nightCity").setOrigin(0, 0);
     nightCity.displayWidth = gameWidth;
     nightCity.displayHeight = gameHeight;
+
+    this.anims.create({
+      key: "dudeLeft",
+      frames: this.anims.generateFrameNumbers("dude", { start: 0, end: 3 }),
+      frameRate: 5,
+      repeat: -1,
+    });
+
+    this.anims.create({
+      key: "dudeTurn",
+      frames: [{ key: "dude", frame: 4 }],
+      frameRate: 20,
+    });
+
+    this.anims.create({
+      key: "dudeRight",
+      frames: this.anims.generateFrameNumbers("dude", { start: 5, end: 8 }),
+      frameRate: 5,
+      repeat: -1,
+    });
 
     this.player = new Player(this, 100, 450, this.scale);
     this.ground = this.physics.add.staticImage(
@@ -322,22 +345,39 @@ export default class GameScene extends Scene {
     this.drones = this.physics.add.group();
 
     this.anims.create({
-      key: "car-drive",
+      key: "carDrive",
       frames: this.anims.generateFrameNumbers("car", { start: 1, end: 3 }),
       frameRate: 8,
       repeat: -1,
     });
     this.anims.create({
-      key: "car-wait",
+      key: "carWait",
       frames: [{ key: "car", frame: 0 }],
       frameRate: 5,
     });
+    this.anims.create({
+      key: "meguminCast1",
+      frames: [{ key: "megumin", frame: 0 }],
+      frameRate: 20,
+    });
 
-    // this.meguController = new MeguminSpawnController(this);
-    // this.meguController.setState(MEGUMIN_SPAWN_STATE.DRIVING_IN);
+    this.anims.create({
+      key: "meguminCast2",
+      frames: [{ key: "megumin", frame: 1 }],
+      frameRate: 20,
+    });
+
+    this.anims.create({
+      key: "meguminCast3",
+      frames: [{ key: "megumin", frame: 2 }],
+      frameRate: 20,
+    });
+
+    this.meguController = new MeguminSpawnController(this);
+    this.meguController.setState(MEGUMIN_SPAWN_STATE.DRIVING_IN);
     // this.car = this.physics.add.sprite(-600, gameHeight - 100, "car");
     // this.car.setVelocityX(400);
-    // this.car.play("car-drive");
+    // this.car.play("carDrive");
     // this.car.setScale(this.scale * 0.7);
 
     // this.physics.add.collider(this.car, ground);
@@ -345,8 +385,6 @@ export default class GameScene extends Scene {
 
     // this.carSound = new ThreeDSound(this, "./assets/music/axel.mp3", this.car, gameWidth + 100, gameWidth / 5);
     // this.carSound.initOnUserInput();
-
-    this.centerReached = false;
 
     // this.anims.create({
     //   key: "megu-cast",
@@ -395,7 +433,7 @@ export default class GameScene extends Scene {
     });
 
     // Запускаем музыку
-    this.bdMusic.play();
+    // this.bdMusic.play();
   }
 
   updateCar() {
@@ -405,7 +443,7 @@ export default class GameScene extends Scene {
     // if (!this.centerReached && this.car.x >= centerX) {
     //   this.car.setVelocityX(0);
     //   this.centerReached = true;
-    //   this.car.anims.play("car-wait", true);
+    //   this.car.anims.play("carWait", true);
     // Вызывает выход персонажа через 1 секунду
     // this.time.delayedCall(1000, () => {
     //   this.character = this.physics.add.sprite(
@@ -430,7 +468,7 @@ export default class GameScene extends Scene {
 
     this.player.update();
     // this.updateCar();
-    // this.meguController.update(time, delta);
+    this.meguController.update(time, delta);
     this.clouds.tilePositionX += 0.1;
     this.drones.getChildren().forEach((drone) => drone.update(time, delta));
   }

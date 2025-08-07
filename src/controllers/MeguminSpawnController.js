@@ -1,5 +1,5 @@
 import Car from "../objects/Car.js";
-import { ThreeDSound } from "../utils/ThreeDSound.js";
+import Megumin from "../objects/Megumin.js";
 
 export const MEGUMIN_SPAWN_STATE = Object.freeze({
   DRIVING_IN: "DRIVING_IN",
@@ -12,6 +12,8 @@ export const MEGUMIN_SPAWN_STATE = Object.freeze({
   INACTIVE: "INACTIVE",
 });
 
+const groundHeight = 28;
+
 export class MeguminSpawnController {
   constructor(scene) {
     this.scene = scene;
@@ -19,43 +21,49 @@ export class MeguminSpawnController {
 
     const gameWidth = scene.sys.game.config.width;
     const gameHeight = scene.sys.game.config.height;
-    const groundHeight = 28;
     this.car = new Car(
       this.scene,
       -(gameWidth / 2),
       gameHeight - this.scene.scale * 0.7 * (103 / 2) - groundHeight
     );
 
-    console.log("DDL 2", this);
     this.scene.physics.add.collider(this.car, this.scene.ground);
-    this.carSound = new ThreeDSound(
-      this.scene,
-      "./assets/music/axel.mp3",
-      this.car,
-      gameWidth + 100,
-      gameWidth / 5
-    );
-    this.carSound.initOnUserInput();
-    this.doorSound = new ThreeDSound(
-      this.scene,
-      "./assets/music/door.mp3",
-      this.car,
-      gameWidth + 100,
-      gameWidth / 5
-    );
-    this.doorSound.initOnUserInput();
+    // this.carSound = new ThreeDSound(
+    //   this.scene,
+    //   "./assets/music/axel.mp3",
+    //   this.car,
+    //   gameWidth + 100,
+    //   gameWidth / 5
+    // );
+    // this.carSound.initOnUserInput();
+    // this.doorSound = new ThreeDSound(
+    //   this.scene,
+    //   "./assets/music/door.mp3",
+    //   this.car,
+    //   gameWidth + 100,
+    //   gameWidth / 5
+    // );
+    // this.doorSound.initOnUserInput();
     this.centerReached = false;
     this.car.setVisible(false);
+    this.carSound = this.scene.sound.add("carSound", {
+      loop: false,
+      volume: 0, // начинаем с 0
+    });
+    this.doorSound = this.scene.sound.add("carDoor", {
+      loop: false,
+      volume: 1,
+    });
 
-    // this.character = scene.add.sprite(0, 0, 'character');
+    this.character = new Megumin(this.scene, 100, 500);
     // this.character.setVisible(false);
-
+    this.character.castSpell();
     // this.add(this.car);
     this.stateHandlers = {
       [MEGUMIN_SPAWN_STATE.DRIVING_IN]: this.handleDrivingIn.bind(this),
       [MEGUMIN_SPAWN_STATE.STOPPED]: this.handleStopped.bind(this),
       [MEGUMIN_SPAWN_STATE.CHARACTER_EXIT]: this.handleCharacterExit.bind(this),
-      // [MEGUMIN_SPAWN_STATE.CASTING]: this.handleCasting.bind(this),
+      [MEGUMIN_SPAWN_STATE.CASTING]: this.handleCasting.bind(this),
       // [MEGUMIN_SPAWN_STATE.CHARACTER_ENTER]:
       //   this.handleCharacterEnter.bind(this),
       // [MEGUMIN_SPAWN_STATE.DRIVING_OUT]: this.handleDrivingOut.bind(this),
@@ -67,7 +75,27 @@ export class MeguminSpawnController {
     if (this.state === MEGUMIN_SPAWN_STATE.DRIVING_IN) {
       this.car.update(time, delta);
       if (this.carSound) {
-        this.carSound.update();
+        const camera = this.scene.cameras.main;
+        const centerX = camera.worldView.centerX;
+
+        const distance = Math.abs(this.car.x - centerX);
+        const maxDistance = camera.width / 2 + 200;
+        let volume = 1 - Phaser.Math.Clamp(distance / maxDistance, 0, 1);
+
+        // Плавная громкость
+        this.carSound.setVolume(
+          Phaser.Math.Linear(this.carSound.volume, volume, 0.05)
+        );
+
+        // Панорама (влево/вправо)
+        const pan = Phaser.Math.Clamp(
+          (this.car.x - centerX) / maxDistance,
+          -1,
+          1
+        );
+        this.carSound.setPan(
+          Phaser.Math.Linear(this.carSound.pan || 0, pan, 0.05)
+        );
       }
     }
   }
@@ -83,10 +111,10 @@ export class MeguminSpawnController {
   }
 
   handleDrivingIn() {
-    console.log("DDL car", this);
     // this.car.setVisible(false);
     this.car.setVisible(true);
     this.car.move();
+
     this.carSound.play();
 
     this.scene.tweens.add({
@@ -104,28 +132,29 @@ export class MeguminSpawnController {
   }
 
   handleCharacterExit() {
-    // const music = this.scene.sound.add("doorSound", {
-    //   loop: false,
-    //   volume: 1,
-    // });
-    console.log("DDL handleCharacterExit", this);
     this.doorSound.play();
-    this.doorSound.update();
+    // this.character.setPosition(
+    //   this.car.x,
+    //   this.scene.sys.game.config.height -
+    //     this.scene.scale * 0.7 * (94 / 2) -
+    //     groundHeight
+    // );
     // this.character.setVisible(true);
+    this.setState(MEGUMIN_SPAWN_STATE.CASTING);
 
     // this.scene.time.delayedCall(1000, () => {
     //   this.setState("CASTING");
     // });
   }
 
-  // handleCasting() {
-  //   this.playAnimation(this.character, "cast");
-  //   this.playSound("cast");
-
-  //   this.scene.time.delayedCall(2000, () => {
-  //     this.setState("CHARACTER_ENTER");
-  //   });
-  // }
+  handleCasting() {
+    // this.character.castSpell();
+    // this.meguminCastSound.play();
+    // this.playSound("cast");
+    // this.scene.time.delayedCall(2000, () => {
+    //   this.setState("CHARACTER_ENTER");
+    // });
+  }
 
   // handleCharacterEnter() {
   //   this.playAnimation(this.character, "enter");

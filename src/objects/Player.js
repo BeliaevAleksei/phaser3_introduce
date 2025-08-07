@@ -18,26 +18,6 @@ export default class Player extends Physics.Arcade.Sprite {
     this.setGravityY(1000);
     this.setScale(scale * 0.7);
 
-    scene.anims.create({
-      key: "left",
-      frames: scene.anims.generateFrameNumbers("dude", { start: 0, end: 3 }),
-      frameRate: 5,
-      repeat: -1,
-    });
-
-    scene.anims.create({
-      key: "turn",
-      frames: [{ key: "dude", frame: 4 }],
-      frameRate: 20,
-    });
-
-    scene.anims.create({
-      key: "right",
-      frames: scene.anims.generateFrameNumbers("dude", { start: 5, end: 8 }),
-      frameRate: 5,
-      repeat: -1,
-    });
-
     this.cursors = scene.input.keyboard.createCursorKeys();
     this.wKey = scene.input.keyboard.addKey(Input.Keyboard.KeyCodes.W);
     this.aKey = scene.input.keyboard.addKey(Input.Keyboard.KeyCodes.A);
@@ -53,15 +33,15 @@ export default class Player extends Physics.Arcade.Sprite {
       if (this.cursors.left.isDown || this.aKey.isDown) {
         this.setVelocityX(-this.speedPower);
 
-        this.anims.play("left", true);
+        this.anims.play("dudeLeft", true);
       } else if (this.cursors.right.isDown || this.dKey.isDown) {
         this.setVelocityX(this.speedPower);
 
-        this.anims.play("right", true);
+        this.anims.play("dudeRight", true);
       } else {
         this.setVelocityX(0);
 
-        this.anims.play("turn");
+        this.anims.play("dudeTurn");
       }
 
       if (
@@ -77,12 +57,12 @@ export default class Player extends Physics.Arcade.Sprite {
       let velocityX = joystickForceX * this.speedPower;
       if (Math.abs(velocityX) < 10) {
         this.setVelocityX(0);
-        this.anims.play("turn");
+        this.anims.play("dudeTurn");
       } else {
         if (joystickForceX > 0) {
-          this.anims.play("right", true);
+          this.anims.play("dudeRight", true);
         } else {
-          this.anims.play("left", true);
+          this.anims.play("dudeLeft", true);
         }
         this.setVelocityX(velocityX);
       }

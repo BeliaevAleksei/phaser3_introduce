@@ -55,7 +55,6 @@ export class ThreeDSound {
 
   update() {
     if (!this.started || !this.pannerNode) return;
-    console.log("DDL this.gameObject.x", this.soundUrl, this.gameObject.x);
     // Получаем позицию машины
     const carX = this.gameObject.x;
     const carY = 0; // Позиция по оси Y (плоский мир)

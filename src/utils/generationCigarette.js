@@ -11,7 +11,6 @@ export function generateCigarettes(scene, scale) {
 
       const cigarette = scene.cigarettes.create(x, y, "cigarette");
       cigarette.body.allowGravity = false;
-      console.log("DDL scale", scale);
       cigarette.setScale(scale * 0.7);
 
       const glowCircle = scene.add.graphics();
